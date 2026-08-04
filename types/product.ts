@@ -1,0 +1,61 @@
+// types/product.ts
+
+export type Category = "Paper" | "Personal Care" | "Oral Care";
+
+export type Product = {
+  id: string;
+  name: string;
+  brand: string;
+  category: Category;
+  price: number;
+  originalPrice: number | null;
+  rating: number;
+  reviews: number;
+  tag: "Best Seller" | "New" | "Bundle" | "Eco" | null;
+  inStock: boolean;
+  stock: number;
+  blurb: string | null;
+  color: string | null; // tailwind gradient classes for the placeholder art
+  image: string; // relative path from backend, e.g. "/products/xyz.jpg"
+  isPromo: boolean;
+  promoStart: string | null; // ISO date, e.g. "2026-08-01"
+  promoEnd: string | null; // ISO date, e.g. "2026-08-15"
+  totalOrders?: number; // only present on the best-sellers response
+};
+
+export const CATEGORIES: Category[] = ["Paper", "Personal Care", "Oral Care"];
+
+export const BRANDS = [
+  "Fresh",
+  "Kami",
+  "Smart Choice",
+  "Vanitá",
+  "Harmony",
+  "Sweetbaby",
+  "PrimeCare",
+  "Life Defender",
+  "TeaBiotic",
+];
+
+// A promo only counts as "live" if the flag is on AND today falls inside the
+// start/end range (a missing side is treated as open-ended on that side).
+// Shared by the admin panel and the storefront so both agree on what "live" means.
+export function isPromoActive(
+  product: Pick<Product, "isPromo" | "promoStart" | "promoEnd">,
+): boolean {
+  if (!product.isPromo) return false;
+
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  if (product.promoStart) {
+    const start = new Date(product.promoStart);
+    if (now < start) return false;
+  }
+  if (product.promoEnd) {
+    const end = new Date(product.promoEnd);
+    end.setHours(23, 59, 59, 999);
+    if (now > end) return false;
+  }
+  return true;
+}

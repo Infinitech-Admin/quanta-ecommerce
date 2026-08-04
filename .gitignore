@@ -1,0 +1,10 @@
+node_modules
+.next
+.env*.local
+*.log
+# next-pwa generated files — add these lines to your existing .gitignore
+public/sw.js
+public/sw.js.map
+public/workbox-*.js
+public/workbox-*.js.map
+public/swe-worker-*.js
