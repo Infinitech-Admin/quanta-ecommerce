@@ -32,7 +32,7 @@ const TAG_STYLES: Record<string, string> = {
 
 export function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
-  const soldOut = !product.inStock;
+  const soldOut = !product.inStock || product.stock <= 0;
 
   const cardInner = (
     <>
@@ -128,6 +128,7 @@ export function ProductCard({ product }: { product: Product }) {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
+              if (soldOut) return;
               addItem(product);
             }}
           >
