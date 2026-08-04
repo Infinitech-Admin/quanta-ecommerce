@@ -11,6 +11,10 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "infinitech-api17.site",
+      },
+      {
+        protocol: "https",
         hostname: "**",
       },
     ],
@@ -22,8 +26,7 @@ module.exports = withPWA({
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,
-  // Service worker only makes sense in prod — skip it in dev so you don't
-  // fight stale-cache issues while iterating.
+  // Service worker only makes sense in production.
   disable: process.env.NODE_ENV === "development",
   workboxOptions: {
     disableDevLogs: true,
