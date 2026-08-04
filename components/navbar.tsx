@@ -1,0 +1,355 @@
+"use client";
+
+import * as React from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Search, ShoppingBag, User, Menu, X, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { useCart } from "@/context/cart-context";
+import { CartSheet } from "@/components/cart-sheet";
+import { AuthDialog } from "@/components/auth-dialog";
+import { NavNotificationBell } from "@/components/nav-notification-bell";
+import { toast } from "sonner";
+
+type CurrentUser = {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+};
+
+// Not yet in lib.dom.d.ts — fired by Chromium browsers when the current
+// page is eligible to be installed as a PWA.
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
+function usePwaInstall() {
+  const [installEvent, setInstallEvent] =
+    React.useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = React.useState(false);
+
+  React.useEffect(() => {
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as { standalone?: boolean }).standalone === true;
+    setIsInstalled(standalone);
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallEvent(e as BeforeInstallPromptEvent);
+    };
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setInstallEvent(null);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+    return () => {
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt,
+      );
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
+
+  const promptInstall = async () => {
+    if (!installEvent) return;
+    await installEvent.prompt();
+    const { outcome } = await installEvent.userChoice;
+    if (outcome === "accepted") {
+      toast.success("Quanta Paper installed");
+    }
+    setInstallEvent(null);
+  };
+
+  return {
+    canInstall: !!installEvent && !isInstalled,
+    promptInstall,
+  };
+}
+
+export function Navbar() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { count, clear } = useCart();
+  const [cartOpen, setCartOpen] = React.useState(false);
+  const [authOpen, setAuthOpen] = React.useState(false);
+  const [authTab, setAuthTab] = React.useState<"login" | "register">("login");
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const { canInstall, promptInstall } = usePwaInstall();
+
+  const [user, setUser] = React.useState<CurrentUser | null>(null);
+  const [userLoading, setUserLoading] = React.useState(true);
+
+  const [searchQuery, setSearchQuery] = React.useState(
+    () => searchParams.get("search") ?? "",
+  );
+  const [mobileSearchQuery, setMobileSearchQuery] = React.useState(
+    () => searchParams.get("search") ?? "",
+  );
+
+  React.useEffect(() => {
+    const current = searchParams.get("search") ?? "";
+    setSearchQuery(current);
+    setMobileSearchQuery(current);
+  }, [searchParams]);
+
+  const fetchCurrentUser = React.useCallback(async () => {
+    try {
+      const res = await fetch("/api/auth/me", { cache: "no-store" });
+
+      if (!res.ok) {
+        setUser(null);
+        return;
+      }
+
+      const data = await res.json();
+      setUser(data.user ?? null);
+    } catch {
+      setUser(null);
+    } finally {
+      setUserLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchCurrentUser();
+  }, [fetchCurrentUser]);
+
+  const openAuth = (tab: "login" | "register") => {
+    setAuthTab(tab);
+    setAuthOpen(true);
+  };
+
+  const handleLogout = async () => {
+    try {
+      const res = await fetch("/api/auth/logout", { method: "POST" });
+      if (!res.ok) {
+        toast.error("Could not log out. Please try again.");
+        return;
+      }
+      setUser(null);
+      clear();
+      toast.success("Logged out successfully");
+      router.refresh();
+    } catch {
+      toast.error("Could not reach the server. Please try again.");
+    }
+  };
+
+  const runSearch = (query: string) => {
+    const trimmed = query.trim();
+    const params = new URLSearchParams();
+    if (trimmed) params.set("search", trimmed);
+    const qs = params.toString();
+    router.push(`/shop${qs ? `?${qs}` : ""}`);
+    setMobileOpen(false);
+  };
+
+  const handleDesktopSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    runSearch(searchQuery);
+  };
+
+  const handleMobileSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    runSearch(mobileSearchQuery);
+  };
+
+  const initials = user
+    ? `${user.first_name?.[0] ?? ""}${user.last_name?.[0] ?? ""}`.toUpperCase()
+    : null;
+
+  return (
+    <header className="sticky top-0 z-40 w-full">
+      <div className="border-b border-moss-100 bg-background/95 backdrop-blur">
+        <div className="container flex h-20 items-center gap-4">
+          <button
+            className="rounded-full p-2 hover:bg-moss-50 lg:hidden"
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+          </button>
+
+          <Link href="/" className="group flex shrink-0 items-center">
+            <Image
+              src="/logo.png"
+              alt="Quanta Paper Corporation"
+              width={220}
+              height={64}
+              priority
+              className="h-12 w-auto transition-transform duration-300 ease-out group-hover:scale-105 sm:h-14"
+            />
+          </Link>
+
+          <form
+            onSubmit={handleDesktopSearchSubmit}
+            className="relative hidden flex-1 max-w-md md:block"
+          >
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-moss-400 transition-colors peer-focus:text-moss-600" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search tissue, wipes, soap..."
+              className="peer pl-10 transition-shadow focus-visible:ring-2 focus-visible:ring-moss-400 focus-visible:ring-offset-0"
+            />
+          </form>
+
+          <div className="ml-auto flex items-center gap-2">
+            {canInstall && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden items-center gap-1.5 rounded-full border-moss-300 text-moss-700 hover:bg-moss-50 sm:flex"
+                onClick={promptInstall}
+              >
+                <Download className="h-4 w-4" />
+                Install app
+              </Button>
+            )}
+
+            {/* Push notification bell — always visible, next to account/cart */}
+            <NavNotificationBell />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-12 w-12 rounded-full [&_svg]:h-7 [&_svg]:w-7"
+                  aria-label="Account"
+                >
+                  {!userLoading && initials ? (
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-moss-700 text-xs font-bold text-white">
+                      {initials}
+                    </span>
+                  ) : (
+                    <User />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {user ? (
+                  <>
+                    <DropdownMenuLabel className="max-w-[200px] truncate">
+                      {user.first_name} {user.last_name}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/orders">Orders</Link>
+                    </DropdownMenuItem>
+                    {canInstall && (
+                      <DropdownMenuItem
+                        onSelect={promptInstall}
+                        className="sm:hidden"
+                      >
+                        Install app
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={handleLogout}>
+                      Log out
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuLabel>My account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => openAuth("login")}>
+                      Log in
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => openAuth("register")}>
+                      Register
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/orders">Orders</Link>
+                    </DropdownMenuItem>
+                    {canInstall && (
+                      <DropdownMenuItem
+                        onSelect={promptInstall}
+                        className="sm:hidden"
+                      >
+                        Install app
+                      </DropdownMenuItem>
+                    )}
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative h-12 w-12 rounded-full [&_svg]:h-7 [&_svg]:w-7"
+              aria-label="Open cart"
+              onClick={() => setCartOpen(true)}
+            >
+              <ShoppingBag />
+              {count > 0 && (
+                <span className="absolute right-0 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-moss-700 text-[11px] font-bold text-white">
+                  {count}
+                </span>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {mobileOpen && (
+          <nav className="container flex flex-col gap-1 pb-4 lg:hidden">
+            <form
+              onSubmit={handleMobileSearchSubmit}
+              className="relative mb-2 mt-1"
+            >
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-moss-400" />
+              <Input
+                value={mobileSearchQuery}
+                onChange={(e) => setMobileSearchQuery(e.target.value)}
+                placeholder="Search products..."
+                className="pl-10"
+              />
+            </form>
+            {canInstall && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="mb-1 flex items-center justify-center gap-1.5 rounded-full border-moss-300 text-moss-700"
+                onClick={promptInstall}
+              >
+                <Download className="h-4 w-4" />
+                Install app
+              </Button>
+            )}
+          </nav>
+        )}
+      </div>
+
+      <CartSheet open={cartOpen} onOpenChange={setCartOpen} />
+      <AuthDialog
+        open={authOpen}
+        onOpenChange={setAuthOpen}
+        defaultTab={authTab}
+        onAuthSuccess={fetchCurrentUser}
+      />
+    </header>
+  );
+}
