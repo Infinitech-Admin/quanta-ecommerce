@@ -5,6 +5,7 @@ import { CartProvider } from "@/context/cart-context";
 import LoadingAnimated from "@/components/LoadingAnimated";
 import { Toaster } from "@/components/ui/sonner";
 import { NotificationPromptBanner } from "@/components/notification-prompt-banner";
+import { CursorTissueTrail } from "@/components/cursor-tissue-trail";
 import { getCurrentUserId } from "@/lib/get-current-user";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -63,6 +64,7 @@ export default async function RootLayout({
       )}
     >
       <body className="flex min-h-screen flex-col">
+        <CursorTissueTrail />
         <CartProvider userId={userId}>
           <LoadingAnimated className="flex min-h-screen flex-1 flex-col">
             {children}

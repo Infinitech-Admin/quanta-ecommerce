@@ -49,6 +49,7 @@ type OrderStatus =
   | "processing"
   | "shipped"
   | "delivered"
+  | "paid"
   | "cancelled";
 
 type OrderItem = {
@@ -76,6 +77,9 @@ type Order = {
   status: OrderStatus;
   items: OrderItem[];
   created_at: string;
+  // Optional free-text location noted when an order is marked "shipped"
+  // (e.g. courier hub, last scan location). Not required for any status.
+  shipping_location: string | null;
 };
 
 const PAYMENT_LABELS: Record<Order["payment_method"], string> = {
@@ -93,6 +97,7 @@ const STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
   { value: "shipped", label: "Shipped" },
   { value: "delivered", label: "Delivered" },
   { value: "cancelled", label: "Cancelled" },
+  { value: "paid", label: "Paid" },
 ];
 
 const FILTER_OPTIONS = [
@@ -107,6 +112,7 @@ const STATUS_STYLES: Record<OrderStatus, string> = {
   shipped: "bg-sky-50 text-sky-700 border-sky-200",
   delivered: "bg-green-50 text-green-700 border-green-200",
   cancelled: "bg-red-50 text-red-600 border-red-200",
+  paid: "bg-green-50 text-green-600 border-green-200",
 };
 
 function formatDate(d: string) {
@@ -130,6 +136,30 @@ function StatusBadge({ status }: { status: OrderStatus }) {
   );
 }
 
+// Fills in any fields that might be missing/null from the API so the rest
+// of the component can safely assume a complete shape.
+function normalizeOrder(o: Partial<Order> & { id: number }): Order {
+  return {
+    id: o.id,
+    tracking_number: o.tracking_number ?? null,
+    email: o.email ?? "",
+    first_name: o.first_name ?? "",
+    last_name: o.last_name ?? "",
+    address: o.address ?? "",
+    city: o.city ?? "",
+    zip: o.zip ?? "",
+    phone: o.phone ?? "",
+    payment_method: o.payment_method ?? "cod",
+    proof_path: o.proof_path ?? null,
+    subtotal: o.subtotal ?? 0,
+    total: o.total ?? 0,
+    status: o.status ?? "pending",
+    items: Array.isArray(o.items) ? o.items : [],
+    created_at: o.created_at ?? new Date().toISOString(),
+    shipping_location: o.shipping_location ?? null,
+  };
+}
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -141,6 +171,7 @@ export default function AdminOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [editStatus, setEditStatus] = useState<OrderStatus>("pending");
   const [editTracking, setEditTracking] = useState("");
+  const [editShippingLocation, setEditShippingLocation] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -161,13 +192,20 @@ export default function AdminOrdersPage() {
       if (!res.ok) throw new Error("Failed to load orders");
       const data = await res.json();
 
-      const list: Order[] = Array.isArray(data)
+      const rawList: Partial<Order>[] = Array.isArray(data)
         ? data
         : Array.isArray(data?.orders)
           ? data.orders
           : Array.isArray(data?.data)
             ? data.data
             : [];
+
+      // Defensive normalization: guarantee every order has a complete,
+      // safe shape (esp. `items` as an array) regardless of what the
+      // API actually returned.
+      const list = rawList
+        .filter((o): o is Partial<Order> & { id: number } => o?.id != null)
+        .map(normalizeOrder);
 
       setOrders(list);
     } catch (err) {
@@ -213,29 +251,60 @@ export default function AdminOrdersPage() {
   const rangeStart = filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const rangeEnd = Math.min(page * PAGE_SIZE, filtered.length);
 
+  // Returns whatever the API gives back, unwrapped from common envelope
+  // shapes ({ order }, { data }), but WITHOUT forcing it through
+  // normalizeOrder's defaults. Some PUT responses only echo back the
+  // changed fields (or a differently-shaped object than the list
+  // endpoint), and normalizing in isolation would silently reset
+  // missing fields like `status` back to "pending". Callers should
+  // merge this onto the existing known-good order instead.
   async function updateOrder(
     orderId: number,
-    payload: { status?: OrderStatus; tracking_number?: string },
-  ) {
+    payload: {
+      status?: OrderStatus;
+      tracking_number?: string;
+      shipping_location?: string | null;
+    },
+  ): Promise<Partial<Order>> {
     const res = await fetch(`/api/admin/orders/${orderId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error("Failed to update order");
-    return (await res.json()) as Order;
+    const data = await res.json();
+    const raw = (data?.order ?? data?.data ?? data) as Partial<Order>;
+    return raw;
   }
 
-  // Quick inline status change directly from the table row.
+  // Quick inline status change directly from the table row. If the new
+  // status is "shipped", we open the dialog instead of saving immediately
+  // so the admin has the option (not requirement) to add a shipping
+  // location before it's saved.
   async function handleQuickStatusChange(order: Order, status: OrderStatus) {
+    if (status === "shipped") {
+      openViewDialog(order);
+      setEditStatus("shipped");
+      return;
+    }
+
     setUpdatingRowId(order.id);
     // Optimistic update
     setOrders((prev) =>
       prev.map((o) => (o.id === order.id ? { ...o, status } : o)),
     );
     try {
-      const updated = await updateOrder(order.id, { status });
-      setOrders((prev) => prev.map((o) => (o.id === order.id ? updated : o)));
+      const raw = await updateOrder(order.id, { status });
+      // Merge server response onto the existing row instead of replacing
+      // it outright — if the API response is missing/differently-shaped
+      // fields, this keeps the optimistic value instead of reverting it.
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id
+            ? normalizeOrder({ ...o, ...raw, status: raw.status ?? status })
+            : o,
+        ),
+      );
     } catch (err) {
       await fetchOrders(); // roll back on failure
       alert(err instanceof Error ? err.message : "Failed to update order");
@@ -248,18 +317,33 @@ export default function AdminOrdersPage() {
     setSelectedOrder(order);
     setEditStatus(order.status);
     setEditTracking(order.tracking_number ?? "");
+    setEditShippingLocation(order.shipping_location ?? "");
   }
 
   async function handleSaveDialog() {
     if (!selectedOrder) return;
     setIsSaving(true);
     try {
-      const updated = await updateOrder(selectedOrder.id, {
+      const raw = await updateOrder(selectedOrder.id, {
         status: editStatus,
         tracking_number: editTracking || undefined,
+        // Optional — only sent when status is "shipped" and left blank
+        // otherwise clears/keeps whatever the admin left in the field.
+        shipping_location:
+          editStatus === "shipped" ? editShippingLocation || null : null,
+      });
+      const merged = normalizeOrder({
+        ...selectedOrder,
+        ...raw,
+        status: raw.status ?? editStatus,
+        tracking_number:
+          raw.tracking_number ?? editTracking ?? selectedOrder.tracking_number,
+        shipping_location:
+          raw.shipping_location ??
+          (editStatus === "shipped" ? editShippingLocation || null : null),
       });
       setOrders((prev) =>
-        prev.map((o) => (o.id === selectedOrder.id ? updated : o)),
+        prev.map((o) => (o.id === selectedOrder.id ? merged : o)),
       );
       setSelectedOrder(null);
     } catch (err) {
@@ -368,123 +452,128 @@ export default function AdminOrdersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginated.map((order) => (
-                    <TableRow
-                      key={order.id}
-                      className="border-b border-moss-100 last:border-0 hover:bg-moss-50/70"
-                    >
-                      <TableCell>
-                        <p className="text-sm font-medium text-moss-900">
-                          #{order.id}
-                        </p>
-                        {order.tracking_number && (
-                          <p className="text-[11px] text-muted-foreground">
-                            {order.tracking_number}
+                  {paginated.map((order) => {
+                    const items = order.items ?? [];
+                    return (
+                      <TableRow
+                        key={order.id}
+                        className="border-b border-moss-100 last:border-0 hover:bg-moss-50/70"
+                      >
+                        <TableCell>
+                          <p className="text-sm font-medium text-moss-900">
+                            #{order.id}
                           </p>
-                        )}
-                      </TableCell>
-                      <TableCell className="max-w-[180px]">
-                        <p className="truncate text-sm font-medium text-moss-900">
-                          {order.first_name} {order.last_name}
-                        </p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {order.email}
-                        </p>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-xs text-muted-foreground">
-                          {order.items.length}{" "}
-                          {order.items.length === 1 ? "item" : "items"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-medium text-moss-900">
-                          {formatPHP(Number(order.total))}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-xs text-muted-foreground">
-                          {PAYMENT_LABELS[order.payment_method]}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={order.status}
-                          onValueChange={(v) =>
-                            handleQuickStatusChange(order, v as OrderStatus)
-                          }
-                          disabled={updatingRowId === order.id}
-                        >
-                          <SelectTrigger className="h-8 w-[130px] text-xs">
-                            <SelectValue>
-                              <StatusBadge status={order.status} />
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {STATUS_OPTIONS.map((opt) => (
-                              <SelectItem key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(order.created_at)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-moss-600 hover:text-moss-900"
-                            onClick={() => openViewDialog(order)}
-                            aria-label={`View order ${order.id}`}
+                          {order.tracking_number && (
+                            <p className="text-[11px] text-muted-foreground">
+                              {order.tracking_number}
+                            </p>
+                          )}
+                        </TableCell>
+                        <TableCell className="max-w-[180px]">
+                          <p className="truncate text-sm font-medium text-moss-900">
+                            {order.first_name} {order.last_name}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {order.email}
+                          </p>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-xs text-muted-foreground">
+                            {items.length}{" "}
+                            {items.length === 1 ? "item" : "items"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-medium text-moss-900">
+                            {formatPHP(Number(order.total))}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-xs text-muted-foreground">
+                            {PAYMENT_LABELS[order.payment_method]}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={order.status}
+                            onValueChange={(v) =>
+                              handleQuickStatusChange(order, v as OrderStatus)
+                            }
+                            disabled={updatingRowId === order.id}
                           >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                            <SelectTrigger className="h-8 w-[130px] text-xs">
+                              <SelectValue>
+                                <StatusBadge status={order.status} />
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {STATUS_OPTIONS.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(order.created_at)}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-moss-600 hover:text-moss-900"
+                              onClick={() => openViewDialog(order)}
+                              aria-label={`View order ${order.id}`}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
 
             {/* Card list — below md */}
             <div className="divide-y divide-moss-100 md:hidden">
-              {paginated.map((order) => (
-                <button
-                  key={order.id}
-                  onClick={() => openViewDialog(order)}
-                  className="flex w-full flex-col gap-1.5 px-4 py-3 text-left"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-moss-900">
-                        Order #{order.id}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {order.first_name} {order.last_name} · {order.email}
-                      </p>
+              {paginated.map((order) => {
+                const items = order.items ?? [];
+                return (
+                  <button
+                    key={order.id}
+                    onClick={() => openViewDialog(order)}
+                    className="flex w-full flex-col gap-1.5 px-4 py-3 text-left"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-moss-900">
+                          Order #{order.id}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {order.first_name} {order.last_name} · {order.email}
+                        </p>
+                      </div>
+                      <StatusBadge status={order.status} />
                     </div>
-                    <StatusBadge status={order.status} />
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    <span className="font-medium text-moss-900">
-                      {formatPHP(Number(order.total))}
-                    </span>
-                    <span>
-                      {order.items.length}{" "}
-                      {order.items.length === 1 ? "item" : "items"}
-                    </span>
-                    <span>{PAYMENT_LABELS[order.payment_method]}</span>
-                    <span>{formatDate(order.created_at)}</span>
-                  </div>
-                </button>
-              ))}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                      <span className="font-medium text-moss-900">
+                        {formatPHP(Number(order.total))}
+                      </span>
+                      <span>
+                        {items.length} {items.length === 1 ? "item" : "items"}
+                      </span>
+                      <span>{PAYMENT_LABELS[order.payment_method]}</span>
+                      <span>{formatDate(order.created_at)}</span>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Pagination */}
@@ -579,7 +668,12 @@ export default function AdminOrdersPage() {
                 {/* Items */}
                 <div className="space-y-1.5">
                   <p className="text-xs font-semibold text-moss-800">Items</p>
-                  {selectedOrder.items.map((item) => (
+                  {(selectedOrder.items ?? []).length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      No item details available for this order.
+                    </p>
+                  )}
+                  {(selectedOrder.items ?? []).map((item) => (
                     <div
                       key={item.id}
                       className="flex items-center justify-between text-xs text-moss-700"
@@ -630,6 +724,27 @@ export default function AdminOrdersPage() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Only shown when status is "shipped" — optional, so the
+                    admin can skip it and just save the status change. */}
+                {editStatus === "shipped" && (
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="editShippingLocation">
+                      Shipping location{" "}
+                      <span className="text-muted-foreground">(optional)</span>
+                    </Label>
+                    <Input
+                      id="editShippingLocation"
+                      value={editShippingLocation}
+                      onChange={(e) => setEditShippingLocation(e.target.value)}
+                      placeholder="e.g. LBC Alabang Hub, en route to Cavite"
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Leave blank if you don't want to note a location for this
+                      update.
+                    </p>
+                  </div>
+                )}
 
                 <div className="grid gap-1.5">
                   <Label htmlFor="editTracking">Tracking number</Label>

@@ -13,6 +13,7 @@ import {
   Bell,
   ExternalLink,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { Button } from "@/components/ui/button";
@@ -128,9 +129,10 @@ export default function AdminAnnouncementsPage() {
 
       setAnnouncements(list);
     } catch (err) {
-      setLoadError(
-        err instanceof Error ? err.message : "Failed to load announcements",
-      );
+      const message =
+        err instanceof Error ? err.message : "Failed to load announcements";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -215,8 +217,20 @@ export default function AdminAnnouncementsPage() {
 
       setIsFormOpen(false);
       await fetchAnnouncements();
+
+      toast.success(
+        formMode === "add" ? "Announcement posted" : "Announcement updated",
+        {
+          description:
+            formMode === "add" && form.is_published
+              ? "Subscribers are being notified now."
+              : undefined,
+        },
+      );
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to save announcement");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to save announcement",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -233,9 +247,10 @@ export default function AdminAnnouncementsPage() {
       setAnnouncements((prev) =>
         prev.filter((a) => a.id !== deleteAnnouncement.id),
       );
+      toast.success("Announcement deleted");
       setDeleteAnnouncement(null);
     } catch (err) {
-      alert(
+      toast.error(
         err instanceof Error ? err.message : "Failed to delete announcement",
       );
     } finally {

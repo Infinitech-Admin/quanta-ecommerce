@@ -1,12 +1,26 @@
-// 📁 PUT THIS FILE AT: app/api/products/[id]/route.ts
-// (the folder name is literally "[id]", square brackets included —
-// that's how Next.js marks a dynamic route segment)
-
+// 📁 app/api/products/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// GET /api/products/:id
+function getToken(request: NextRequest) {
+  return request.cookies.get("auth_token")?.value;
+}
+
+async function parseUpstream(res: Response) {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    console.error("Laravel did not return JSON:", text.slice(0, 500));
+    return {
+      error: "Upstream returned invalid response",
+      raw: text.slice(0, 500),
+    };
+  }
+}
+
+// GET /api/products/:id — public, no token needed
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } },
@@ -16,7 +30,7 @@ export async function GET(
     cache: "no-store",
   });
 
-  const data = await res.json();
+  const data = await parseUpstream(res);
   return NextResponse.json(data, { status: res.status });
 }
 
@@ -26,6 +40,14 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  const token = getToken(request);
+  if (!token) {
+    return NextResponse.json(
+      { message: "Not authenticated." },
+      { status: 401 },
+    );
+  }
+
   const formData = await request.formData();
   if (!formData.has("_method")) {
     formData.append("_method", "PUT");
@@ -34,10 +56,13 @@ export async function POST(
   const res = await fetch(`${API_URL}/products/${params.id}`, {
     method: "POST",
     body: formData,
-    headers: { Accept: "application/json" },
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
   });
 
-  const data = await res.json();
+  const data = await parseUpstream(res);
   return NextResponse.json(data, { status: res.status });
 }
 
@@ -46,11 +71,23 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  const token = getToken(request);
+  if (!token) {
+    return NextResponse.json(
+      { message: "Not authenticated." },
+      { status: 401 },
+    );
+  }
+
   const res = await fetch(`${API_URL}/products/${params.id}`, {
     method: "DELETE",
-    headers: { Accept: "application/json" },
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
   });
 
-  const data = await res.json();
+  if (res.status === 204) return new NextResponse(null, { status: 204 });
+  const data = await parseUpstream(res);
   return NextResponse.json(data, { status: res.status });
 }

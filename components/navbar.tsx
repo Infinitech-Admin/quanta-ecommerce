@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Search, ShoppingBag, User, Menu, X, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,9 @@ type CurrentUser = {
   first_name: string;
   last_name: string;
   email: string;
+  // Needed so the navbar can tell admins apart from regular customers —
+  // used to redirect admins to the dashboard and hide customer-only links.
+  role?: "admin" | "customer" | string;
 };
 
 // Not yet in lib.dom.d.ts — fired by Chromium browsers when the current
@@ -84,6 +87,7 @@ function usePwaInstall() {
 
 export function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { count, clear } = useCart();
   const [cartOpen, setCartOpen] = React.useState(false);
@@ -129,6 +133,19 @@ export function Navbar() {
   React.useEffect(() => {
     fetchCurrentUser();
   }, [fetchCurrentUser]);
+
+  const isAdmin = user?.role === "admin";
+
+  // If an admin account ends up on any customer-facing page (fresh login,
+  // a bookmarked link, refresh, etc.), bounce them straight to the admin
+  // dashboard instead of showing the storefront. This also covers /orders,
+  // since order history is a customer-only view.
+  React.useEffect(() => {
+    if (userLoading) return;
+    if (isAdmin && !pathname.startsWith("/admin")) {
+      router.replace("/admin/orders");
+    }
+  }, [isAdmin, userLoading, pathname, router]);
 
   const openAuth = (tab: "login" | "register") => {
     setAuthTab(tab);
@@ -254,9 +271,13 @@ export function Navbar() {
                       {user.first_name} {user.last_name}
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/orders">Orders</Link>
-                    </DropdownMenuItem>
+                    {/* Order history is customer-only — admins are
+                        redirected to /admin anyway, so don't offer this. */}
+                    {!isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/orders">Orders</Link>
+                      </DropdownMenuItem>
+                    )}
                     {canInstall && (
                       <DropdownMenuItem
                         onSelect={promptInstall}

@@ -6,12 +6,17 @@ export async function PUT(
 ) {
   const { id } = await params;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const token = request.cookies.get("auth_token")?.value;
 
   if (!apiUrl) {
     return NextResponse.json(
       { message: "NEXT_PUBLIC_API_URL is not configured." },
       { status: 500 },
     );
+  }
+
+  if (!token) {
+    return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
   }
 
   let body: unknown;
@@ -31,6 +36,7 @@ export async function PUT(
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(body),
       cache: "no-store",
@@ -43,6 +49,13 @@ export async function PUT(
   }
 
   const data = await laravelResponse.json().catch(() => ({}));
+
+  if (laravelResponse.status === 401) {
+    const response = NextResponse.json(data, { status: 401 });
+    response.cookies.delete("auth_token");
+    return response;
+  }
+
   return NextResponse.json(data, { status: laravelResponse.status });
 }
 
@@ -52,6 +65,7 @@ export async function DELETE(
 ) {
   const { id } = await params;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const token = request.cookies.get("auth_token")?.value;
 
   if (!apiUrl) {
     return NextResponse.json(
@@ -60,12 +74,17 @@ export async function DELETE(
     );
   }
 
+  if (!token) {
+    return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
+  }
+
   let laravelResponse: Response;
   try {
     laravelResponse = await fetch(`${apiUrl}/admin/announcements/${id}`, {
       method: "DELETE",
       headers: {
         Accept: "application/json",
+        Authorization: `Bearer ${token}`,
       },
       cache: "no-store",
     });
@@ -77,5 +96,12 @@ export async function DELETE(
   }
 
   const data = await laravelResponse.json().catch(() => ({}));
+
+  if (laravelResponse.status === 401) {
+    const response = NextResponse.json(data, { status: 401 });
+    response.cookies.delete("auth_token");
+    return response;
+  }
+
   return NextResponse.json(data, { status: laravelResponse.status });
 }

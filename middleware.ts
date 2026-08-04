@@ -1,22 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const isDev = process.env.NODE_ENV !== "production";
+
+function log(...args: unknown[]) {
+  if (isDev) console.log("[middleware]", ...args);
+}
+
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get("auth_token")?.value;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const pathname = request.nextUrl.pathname;
 
-  console.log("[middleware] path:", request.nextUrl.pathname);
-  console.log("[middleware] token present:", !!token);
+  log("path:", pathname, "| token present:", !!token);
 
   const loginUrl = new URL("/login", request.url);
+  loginUrl.searchParams.set("redirect", pathname);
   const homeUrl = new URL("/", request.url);
 
   if (!token) {
-    console.log("[middleware] no token -> /login");
+    log("no token -> /login");
     return NextResponse.redirect(loginUrl);
   }
 
   if (!apiUrl) {
-    console.log("[middleware] no apiUrl -> /login");
+    log("no apiUrl configured -> /login");
     return NextResponse.redirect(loginUrl);
   }
 
@@ -30,26 +37,27 @@ export async function middleware(request: NextRequest) {
     });
 
     const data = await res.json().catch(() => ({}));
-    console.log("[middleware] /me status:", res.status);
-    console.log("[middleware] /me role:", JSON.stringify(data?.user?.role));
+    log("/me status:", res.status, "| role:", data?.user?.role);
 
     if (!res.ok) {
-      console.log("[middleware] /me not ok -> /login");
-      return NextResponse.redirect(loginUrl);
+      log("/me not ok -> /login");
+      const response = NextResponse.redirect(loginUrl);
+      response.cookies.delete("auth_token"); // stale/invalid token, clear it here too
+      return response;
     }
 
     const role = data?.user?.role;
 
     if (role !== "admin") {
-      console.log("[middleware] role check failed -> /");
+      log("role check failed -> /");
       return NextResponse.redirect(homeUrl);
     }
   } catch (err) {
-    console.log("[middleware] fetch threw:", err);
+    log("fetch threw:", err);
     return NextResponse.redirect(loginUrl);
   }
 
-  console.log("[middleware] passed -> continuing to admin");
+  log("passed -> continuing to admin");
   return NextResponse.next();
 }
 

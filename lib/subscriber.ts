@@ -23,7 +23,26 @@ export function getTransporter() {
 
   return transporter;
 }
+export async function fetchActiveSubscriberEmails(): Promise<string[]> {
+  const base = process.env.LARAVEL_API_URL;
+  const secret = process.env.INTERNAL_API_SECRET;
 
+  if (!base || !secret) {
+    throw new Error("Missing LARAVEL_API_URL or INTERNAL_API_SECRET env vars.");
+  }
+
+  const res = await fetch(`${base}/internal/subscribers/active-emails`, {
+    headers: { "X-Internal-Secret": secret },
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch subscribers (${res.status})`);
+  }
+
+  const json = await res.json();
+  return Array.isArray(json?.data) ? json.data : [];
+}
 export async function sendMail(options: {
   to: string;
   subject: string;
