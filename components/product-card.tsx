@@ -32,24 +32,24 @@ const TAG_STYLES: Record<string, string> = {
 
 export function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
+  const soldOut = !product.inStock;
 
-  return (
-    <Link
-      href={buildProductHref(product)}
-      className="paper-fold group flex flex-col rounded-2xl border border-moss-100 bg-card shadow-sm transition-shadow hover:shadow-md"
-    >
+  const cardInner = (
+    <>
       <div
-        className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-t-2xl bg-gradient-to-br ${product.color}`}
+        className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-gradient-to-br ${product.color}`}
       >
         <Image
           src={resolveImageUrl(product.image)}
           alt={product.name}
           fill
-          className="object-cover"
+          className={`object-cover transition-all ${
+            soldOut ? "grayscale" : ""
+          }`}
           sizes="(max-width: 768px) 50vw, 25vw"
         />
 
-        {product.tag && (
+        {product.tag && !soldOut && (
           <Badge
             className={`absolute left-3 top-3 z-10 ${
               TAG_STYLES[product.tag] ??
@@ -59,19 +59,33 @@ export function ProductCard({ product }: { product: Product }) {
             {product.tag}
           </Badge>
         )}
-        {!product.inStock && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-t-2xl bg-moss-950/40">
-            <Badge
-              variant="outline"
-              className="border-white/60 bg-white/90 text-moss-900"
-            >
+
+        {soldOut && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-moss-950/35">
+            <span className="-rotate-[12deg] rounded-sm border-2 border-white/90 bg-moss-950/70 px-4 py-1 text-sm font-bold uppercase tracking-widest text-white shadow-sm">
               Sold out
-            </Badge>
+            </span>
           </div>
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-1 p-3.5">
+      {/* Diagonal strike-through across the whole card */}
+      {soldOut && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-10"
+          style={{
+            background:
+              "linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(28,38,28,0.55) calc(50% - 1px), rgba(28,38,28,0.55) calc(50% + 1px), transparent calc(50% + 1px))",
+          }}
+        />
+      )}
+
+      <div
+        className={`flex flex-1 flex-col gap-1 p-3.5 ${
+          soldOut ? "opacity-60" : ""
+        }`}
+      >
         <span className="text-xs font-semibold uppercase tracking-wide text-green-600">
           {product.brand}
         </span>
@@ -90,7 +104,13 @@ export function ProductCard({ product }: { product: Product }) {
 
         <div className="mt-auto flex items-center justify-between pt-2">
           <div className="flex items-baseline gap-1.5">
-            <span className="rounded-md bg-yellow-300 px-1.5 py-0.5 font-display text-base font-semibold text-moss-950">
+            <span
+              className={`rounded-md px-1.5 py-0.5 font-display text-base font-semibold ${
+                soldOut
+                  ? "bg-moss-200 text-moss-500"
+                  : "bg-yellow-300 text-moss-950"
+              }`}
+            >
               {formatPHP(product.price)}
             </span>
             {product.originalPrice && (
@@ -101,12 +121,10 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
           <Button
             size="icon"
-            variant={product.inStock ? "default" : "outline"}
-            disabled={!product.inStock}
+            variant={soldOut ? "outline" : "default"}
+            disabled={soldOut}
             aria-label={`Add ${product.name} to cart`}
-            className={
-              product.inStock ? "bg-green-600 hover:bg-green-700" : undefined
-            }
+            className={!soldOut ? "bg-green-600 hover:bg-green-700" : undefined}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -117,6 +135,29 @@ export function ProductCard({ product }: { product: Product }) {
           </Button>
         </div>
       </div>
+    </>
+  );
+
+  // Sold-out products aren't clickable at all — render as a plain div
+  // instead of a Link so there's no navigation, no href, no cursor
+  // pointer, and no way to tab into it as a link.
+  if (soldOut) {
+    return (
+      <div
+        aria-disabled="true"
+        className="paper-fold relative flex cursor-not-allowed flex-col overflow-hidden rounded-2xl border border-moss-100 bg-card shadow-sm"
+      >
+        {cardInner}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={buildProductHref(product)}
+      className="paper-fold group relative flex flex-col overflow-hidden rounded-2xl border border-moss-100 bg-card shadow-sm transition-shadow hover:shadow-md"
+    >
+      {cardInner}
     </Link>
   );
 }

@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import {
   LayoutDashboard,
+  Bell,
   Package,
   Images,
+  Tag,
   ShoppingCart,
   Users,
   Settings,
@@ -37,11 +39,11 @@ const NAV_ITEMS: NavItem[] = [
   {
     label: "In App Notification",
     href: "/admin/announcement-notification",
-    icon: LayoutDashboard,
+    icon: Bell,
   },
   { label: "Products", href: "/admin/products", icon: Package },
   { label: "Hero Banner", href: "/admin/hero-banner", icon: Images },
-  { label: "Shop Categories", href: "/admin/categories", icon: Images },
+  { label: "Shop Categories", href: "/admin/categories", icon: Tag },
   {
     label: "Orders",
     href: "/admin/orders",

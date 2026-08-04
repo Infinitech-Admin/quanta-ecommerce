@@ -1,3 +1,4 @@
+// app/api/logout/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -15,13 +16,22 @@ export async function POST(request: NextRequest) {
         cache: "no-store",
       });
     } catch {
-      // Even if the Laravel call fails (e.g. token already expired),
-      // still clear the local cookie below so the user is logged out client-side.
+      // ignore — clear the cookie regardless
     }
   }
 
-  const response = NextResponse.json({ message: "Logged out successfully." });
-  response.cookies.delete("auth_token");
+  const response = NextResponse.json({ message: "Logged out." });
+
+  // Explicit path + maxAge:0 — must match the attributes used when the
+  // cookie was originally set, or the browser won't recognize this as
+  // "the same cookie" and silently ignores the delete.
+  response.cookies.set("auth_token", "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
 
   return response;
 }

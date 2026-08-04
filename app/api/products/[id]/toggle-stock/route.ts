@@ -7,11 +7,33 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  const token = request.cookies.get("auth_token")?.value;
+  if (!token) {
+    return NextResponse.json(
+      { message: "Not authenticated." },
+      { status: 401 },
+    );
+  }
+
   const res = await fetch(`${API_URL}/products/${params.id}/toggle-stock`, {
     method: "POST",
-    headers: { Accept: "application/json" },
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
   });
 
-  const data = await res.json();
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    console.error("Laravel did not return JSON:", text.slice(0, 500));
+    return NextResponse.json(
+      { error: "Upstream returned invalid response", raw: text.slice(0, 500) },
+      { status: 502 },
+    );
+  }
+
   return NextResponse.json(data, { status: res.status });
 }

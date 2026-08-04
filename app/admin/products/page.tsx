@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import { toast } from "sonner";
 import {
   Pencil,
   Trash2,
@@ -214,6 +215,8 @@ export default function AdminProductsPage() {
 
       setProducts(list);
     } catch (err) {
+      // Kept as an inline banner rather than a toast — a failed initial
+      // load should stay visible until resolved, not auto-dismiss.
       setLoadError(
         err instanceof Error ? err.message : "Failed to load products",
       );
@@ -301,7 +304,7 @@ export default function AdminProductsPage() {
     // Guardrail: if promo is on, require at least an end date so it doesn't
     // run forever by accident.
     if (form.isPromo && !form.promoEnd) {
-      alert("Please set an end date for the special promo.");
+      toast.error("Please set an end date for the special promo.");
       return;
     }
     if (
@@ -310,7 +313,7 @@ export default function AdminProductsPage() {
       form.promoEnd &&
       form.promoStart > form.promoEnd
     ) {
-      alert("Promo start date must be before the end date.");
+      toast.error("Promo start date must be before the end date.");
       return;
     }
 
@@ -347,11 +350,13 @@ export default function AdminProductsPage() {
       const res = await fetch(url, { method: "POST", body });
       if (!res.ok) throw new Error("Failed to save product");
 
+      toast.success(formMode === "add" ? "Product added." : "Product updated.");
       setIsFormOpen(false);
       await fetchProducts();
     } catch (err) {
-      // Surface a minimal inline error; swap for your toast system if you have one.
-      alert(err instanceof Error ? err.message : "Failed to save product");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to save product",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -376,10 +381,13 @@ export default function AdminProductsPage() {
       setProducts((prev) =>
         prev.map((p) => (p.id === product.id ? updated : p)),
       );
+      toast.success(
+        updated.inStock ? "Marked in stock." : "Marked out of stock.",
+      );
     } catch (err) {
       // Roll back on failure
       await fetchProducts();
-      alert(
+      toast.error(
         err instanceof Error ? err.message : "Failed to update stock status",
       );
     }
@@ -394,9 +402,12 @@ export default function AdminProductsPage() {
       });
       if (!res.ok) throw new Error("Failed to delete product");
       setProducts((prev) => prev.filter((p) => p.id !== deleteProduct.id));
+      toast.success("Product deleted.");
       setDeleteProduct(null);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete product");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to delete product",
+      );
     } finally {
       setIsDeleting(false);
     }

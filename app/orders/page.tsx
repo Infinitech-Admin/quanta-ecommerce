@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   PackageSearch,
   Clock,
@@ -67,6 +68,9 @@ type Order = {
   status: OrderStatus;
   items: OrderItem[];
   created_at: string;
+  // Free-text location noted by admin when the order was marked "shipped"
+  // (e.g. courier hub, last scan location). May be null.
+  shipping_location: string | null;
 };
 
 type CurrentUser = {
@@ -74,6 +78,10 @@ type CurrentUser = {
   first_name: string;
   last_name: string;
   email: string;
+  // Order history is customer-only. If an admin account somehow lands
+  // here directly (typed URL, old bookmark, etc.), we redirect them away
+  // below rather than showing them their own (nonexistent) order history.
+  role?: "admin" | "customer" | string;
 };
 
 const PAYMENT_LABELS: Record<Order["payment_method"], string> = {
@@ -216,6 +224,13 @@ function OrderCard({ order }: { order: Order }) {
     }
   };
 
+  // Only surface the location while it's still "in transit" — once
+  // delivered or cancelled, the last hub isn't useful info anymore.
+  const showShippingLocation =
+    !!order.shipping_location &&
+    order.status !== "delivered" &&
+    order.status !== "cancelled";
+
   return (
     <div className="rounded-2xl border border-moss-100 bg-card shadow-sm">
       <button
@@ -284,6 +299,21 @@ function OrderCard({ order }: { order: Order }) {
             </div>
           </div>
 
+          {/* Current shipping location, if the admin noted one */}
+          {showShippingLocation && (
+            <div className="mt-3 flex items-start gap-2 rounded-xl border border-sky-100 bg-sky-50/60 px-3 py-2.5">
+              <Truck className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-widest2 text-sky-700">
+                  Current location
+                </p>
+                <p className="text-xs text-sky-900">
+                  {order.shipping_location}
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="mt-5 space-y-2">
             {order.items.map((item) => (
               <div
@@ -335,6 +365,8 @@ function OrderCard({ order }: { order: Order }) {
 }
 
 export default function OrdersPage() {
+  const router = useRouter();
+
   const [currentUser, setCurrentUser] = React.useState<CurrentUser | null>(
     null,
   );
@@ -406,9 +438,18 @@ export default function OrdersPage() {
     fetchCurrentUser();
   }, [fetchCurrentUser]);
 
+  // Order history is customer-only. Admin accounts get redirected to the
+  // admin dashboard instead of seeing this page.
   React.useEffect(() => {
     if (userLoading) return;
-    if (!currentUser) {
+    if (currentUser?.role === "admin") {
+      router.replace("/admin/orders");
+    }
+  }, [currentUser, userLoading, router]);
+
+  React.useEffect(() => {
+    if (userLoading) return;
+    if (!currentUser || currentUser.role === "admin") {
       setOrdersLoading(false);
       setOrders([]);
       return;
@@ -426,7 +467,13 @@ export default function OrdersPage() {
     fetchCurrentUser();
   };
 
-  const loading = userLoading || (!!currentUser && ordersLoading);
+  // While we're figuring out who's logged in, or while an admin is being
+  // redirected away, just show the loading state rather than flashing
+  // customer content.
+  const loading =
+    userLoading ||
+    (!!currentUser && currentUser.role === "admin") ||
+    (!!currentUser && ordersLoading);
 
   return (
     <>
@@ -437,7 +484,7 @@ export default function OrdersPage() {
           <h1 className="font-display text-2xl font-medium italic text-moss-900 sm:text-3xl">
             My orders
           </h1>
-          {currentUser && !ordersLoading && (
+          {currentUser && currentUser.role !== "admin" && !ordersLoading && (
             <button
               type="button"
               onClick={() => fetchOrders(1, false, filter)}
@@ -449,7 +496,7 @@ export default function OrdersPage() {
           )}
         </div>
 
-        {currentUser && (
+        {currentUser && currentUser.role !== "admin" && (
           <div className="mt-4 -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
             {FILTERS.map((f) => (
               <button

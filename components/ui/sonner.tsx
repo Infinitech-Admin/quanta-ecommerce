@@ -3,6 +3,8 @@
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 
 const Toaster = ({ ...props }: ToasterProps) => {
+  console.log("🔵 Toaster component rendering");
+
   return (
     <Sonner
       className="toaster group"

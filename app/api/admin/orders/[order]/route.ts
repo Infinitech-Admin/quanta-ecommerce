@@ -5,6 +5,7 @@ export async function PUT(
   { params }: { params: Promise<{ order: string }> },
 ) {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const token = request.cookies.get("auth_token")?.value;
   const { order } = await params;
 
   if (!apiUrl) {
@@ -12,6 +13,10 @@ export async function PUT(
       { message: "NEXT_PUBLIC_API_URL is not configured." },
       { status: 500 },
     );
+  }
+
+  if (!token) {
+    return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
   }
 
   let body: unknown;
@@ -31,6 +36,7 @@ export async function PUT(
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(body),
       cache: "no-store",
@@ -43,5 +49,13 @@ export async function PUT(
   }
 
   const data = await laravelResponse.json().catch(() => ({}));
+
+  if (laravelResponse.status === 401) {
+    // Stale/invalid token — clear it so the client falls back to guest state.
+    const response = NextResponse.json(data, { status: 401 });
+    response.cookies.delete("auth_token");
+    return response;
+  }
+
   return NextResponse.json(data, { status: laravelResponse.status });
 }
