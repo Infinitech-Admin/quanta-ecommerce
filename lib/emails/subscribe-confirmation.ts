@@ -24,7 +24,7 @@ export function subscribeConfirmationEmail(email: string) {
   </div>
   `;
 
-  const text = `You're subscribed to Quanta Paper updates with ${email}. We'll notify you about restocks and promos.`;
+  const text = `You're subscribed to Quanta Paper updates with ${email}. We'll notify you about new promotions.`;
 
   return { subject, html, text };
 }

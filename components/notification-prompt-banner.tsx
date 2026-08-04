@@ -44,7 +44,7 @@ export function NotificationPromptBanner() {
       <div className="flex-1">
         <p className="text-sm font-semibold text-moss-900">Stay in the loop</p>
         <p className="mt-0.5 text-xs text-moss-500">
-          Get notified about new promos and restocks.
+          Stay updated with our latest promotions
         </p>
 
         <div className="mt-3 flex gap-2">
