@@ -28,6 +28,7 @@ module.exports = withPWA({
   reloadOnOnline: true,
   // Service worker only makes sense in production.
   disable: process.env.NODE_ENV === "development",
+  customWorkerSrc: "worker",
   workboxOptions: {
     disableDevLogs: true,
   },
