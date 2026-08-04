@@ -68,7 +68,7 @@ export function ShopSection() {
   const filtered = React.useMemo(() => {
     const q = searchQuery.toLowerCase();
 
-    return products.filter((p) => {
+    const result = products.filter((p) => {
       if (q) {
         const matchesSearch =
           p.name.toLowerCase().includes(q) ||
@@ -84,6 +84,14 @@ export function ShopSection() {
       if (filters.inStockOnly && !p.inStock) return false;
       if (filters.onSaleOnly && !p.originalPrice) return false;
       return true;
+    });
+
+    // Sold-out items (out of stock, regardless of the inStock flag) go last.
+    return result.sort((a, b) => {
+      const aSoldOut = !a.inStock || a.stock <= 0;
+      const bSoldOut = !b.inStock || b.stock <= 0;
+      if (aSoldOut === bSoldOut) return 0;
+      return aSoldOut ? 1 : -1;
     });
   }, [products, active, filters, searchQuery]);
 
