@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Bell,
   Package,
+  Handshake,
   Images,
   Tag,
   ShoppingCart,
@@ -51,10 +52,9 @@ const NAV_ITEMS: NavItem[] = [
   },
   { label: "Customers", href: "/admin/customers", icon: Users },
   {
-    label: "Settings",
-    href: "/admin/settings",
-    icon: Settings,
-    disabled: true,
+    label: "Resellers",
+    href: "/admin/reseller",
+    icon: Handshake,
   },
 ];
 
