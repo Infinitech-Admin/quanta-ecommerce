@@ -1,22 +1,42 @@
 "use client";
 
 import * as React from "react";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { usePwaUpdate } from "@/hooks/use-pwa-update";
+import { usePwaUpdate, type PwaUpdateStatus } from "@/hooks/use-pwa-update";
 
-// Mount this once, near the root of the app (e.g. in app/layout.tsx next
-// to <Toaster />). It has no visual output of its own — it just fires a
-// toast when an update becomes available.
+const STATUS_COPY: Record<
+  PwaUpdateStatus,
+  { title: string; icon: React.ReactNode }
+> = {
+  idle: { title: "", icon: null },
+  installing: {
+    title: "Downloading update...",
+    icon: <Loader2 className="h-4 w-4 animate-spin" />,
+  },
+  installed: {
+    title: "Update ready to install",
+    icon: <RefreshCw className="h-4 w-4" />,
+  },
+  activating: {
+    title: "Installing update...",
+    icon: <Loader2 className="h-4 w-4 animate-spin" />,
+  },
+  activated: {
+    title: "Update installed — reloading...",
+    icon: <CheckCircle2 className="h-4 w-4" />,
+  },
+};
+
 export function PwaUpdateNotifier() {
-  const { updateAvailable, applyUpdate } = usePwaUpdate();
-  const shownRef = React.useRef(false);
+  const { updateAvailable, status, applyUpdate } = usePwaUpdate();
+  const toastIdRef = React.useRef<string | number | null>(null);
 
+  // "installed" = ready, waiting for the user to click Update.
   React.useEffect(() => {
-    if (!updateAvailable || shownRef.current) return;
-    shownRef.current = true;
+    if (!updateAvailable || status !== "installed") return;
 
-    toast("A new version of Quanta Paper is available", {
+    toastIdRef.current = toast("A new version of Quanta Paper is available", {
       description: "Update now to get the latest fixes and features.",
       icon: <RefreshCw className="h-4 w-4" />,
       duration: Infinity,
@@ -25,7 +45,20 @@ export function PwaUpdateNotifier() {
         onClick: applyUpdate,
       },
     });
-  }, [updateAvailable, applyUpdate]);
+  }, [updateAvailable, status, applyUpdate]);
+
+  // Once the user clicks Update, swap the same toast into a progress
+  // toast that walks through activating -> activated -> (reload).
+  React.useEffect(() => {
+    if (status === "activating" || status === "activated") {
+      const copy = STATUS_COPY[status];
+      toast.loading(copy.title, {
+        id: toastIdRef.current ?? undefined,
+        icon: copy.icon,
+        duration: Infinity,
+      });
+    }
+  }, [status]);
 
   return null;
 }
