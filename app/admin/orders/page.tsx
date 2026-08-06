@@ -11,6 +11,7 @@ import {
   Copy,
   Check,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { Button } from "@/components/ui/button";
@@ -209,9 +210,10 @@ export default function AdminOrdersPage() {
 
       setOrders(list);
     } catch (err) {
-      setLoadError(
-        err instanceof Error ? err.message : "Failed to load orders",
-      );
+      const message =
+        err instanceof Error ? err.message : "Failed to load orders";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -305,9 +307,12 @@ export default function AdminOrdersPage() {
             : o,
         ),
       );
+      toast.success(`Order #${order.id} marked as ${status}`);
     } catch (err) {
       await fetchOrders(); // roll back on failure
-      alert(err instanceof Error ? err.message : "Failed to update order");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update order",
+      );
     } finally {
       setUpdatingRowId(null);
     }
@@ -326,7 +331,6 @@ export default function AdminOrdersPage() {
     try {
       const raw = await updateOrder(selectedOrder.id, {
         status: editStatus,
-        tracking_number: editTracking || undefined,
         // Optional — only sent when status is "shipped" and left blank
         // otherwise clears/keeps whatever the admin left in the field.
         shipping_location:
@@ -336,8 +340,6 @@ export default function AdminOrdersPage() {
         ...selectedOrder,
         ...raw,
         status: raw.status ?? editStatus,
-        tracking_number:
-          raw.tracking_number ?? editTracking ?? selectedOrder.tracking_number,
         shipping_location:
           raw.shipping_location ??
           (editStatus === "shipped" ? editShippingLocation || null : null),
@@ -345,9 +347,12 @@ export default function AdminOrdersPage() {
       setOrders((prev) =>
         prev.map((o) => (o.id === selectedOrder.id ? merged : o)),
       );
+      toast.success(`Order #${selectedOrder.id} updated`);
       setSelectedOrder(null);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to update order");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update order",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -357,9 +362,10 @@ export default function AdminOrdersPage() {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
+      toast.success("Tracking number copied");
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // Clipboard not available — silently ignore.
+      toast.error("Could not copy to clipboard");
     }
   }
 
@@ -705,6 +711,29 @@ export default function AdminOrdersPage() {
                   </p>
                 </div>
 
+                {/* Proof of payment — only present for non-COD orders */}
+                {selectedOrder.proof_path && (
+                  <div className="grid gap-1.5">
+                    <Label>Proof of payment</Label>
+                    <a
+                      href={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${selectedOrder.proof_path}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block overflow-hidden rounded-xl border border-moss-200"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${selectedOrder.proof_path}`}
+                        alt="Proof of payment"
+                        className="max-h-64 w-full object-contain bg-moss-50"
+                      />
+                    </a>
+                    <p className="text-[11px] text-muted-foreground">
+                      Click to open full size in a new tab.
+                    </p>
+                  </div>
+                )}
+
                 {/* Editable fields */}
                 <div className="grid gap-1.5">
                   <Label htmlFor="editStatus">Status</Label>
@@ -747,14 +776,15 @@ export default function AdminOrdersPage() {
                 )}
 
                 <div className="grid gap-1.5">
-                  <Label htmlFor="editTracking">Tracking number</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="editTracking"
-                      value={editTracking}
-                      onChange={(e) => setEditTracking(e.target.value)}
-                      placeholder="e.g. LBC1234567890"
-                    />
+                  <Label>Tracking number</Label>
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-9 flex-1 items-center rounded-md border border-moss-200 bg-moss-50/60 px-3 text-sm text-moss-800">
+                      {editTracking || (
+                        <span className="text-muted-foreground">
+                          Not generated yet
+                        </span>
+                      )}
+                    </div>
                     {editTracking && (
                       <Button
                         type="button"
@@ -771,6 +801,10 @@ export default function AdminOrdersPage() {
                       </Button>
                     )}
                   </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Generated automatically when the order is placed —
+                    can&apos;t be edited.
+                  </p>
                 </div>
               </div>
 

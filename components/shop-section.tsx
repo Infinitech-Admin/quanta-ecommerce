@@ -96,7 +96,7 @@ export function ShopSection() {
   }, [products, active, filters, searchQuery]);
 
   return (
-    <section id="shop" className="relative w-full overflow-hidden">
+    <section id="shop" className="relative w-full overflow-hidden bg-[#EEF3EA]">
       <SectionCleanBackground />
 
       <div className="container py-14 sm:py-20">
