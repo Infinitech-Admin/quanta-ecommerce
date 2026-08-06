@@ -4,7 +4,15 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { Search, ShoppingBag, User, Menu, X, Download } from "lucide-react";
+import {
+  Search,
+  ShoppingBag,
+  User,
+  Menu,
+  X,
+  Download,
+  PackageSearch,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,6 +27,7 @@ import { useCart } from "@/context/cart-context";
 import { CartSheet } from "@/components/cart-sheet";
 import { AuthDialog } from "@/components/auth-dialog";
 import { NavNotificationBell } from "@/components/nav-notification-bell";
+import { TrackOrderDialog } from "@/components/track-order-dialog";
 import { toast } from "sonner";
 
 type CurrentUser = {
@@ -94,6 +103,7 @@ export function Navbar() {
   const [authOpen, setAuthOpen] = React.useState(false);
   const [authTab, setAuthTab] = React.useState<"login" | "register">("login");
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [trackOpen, setTrackOpen] = React.useState(false);
   const { canInstall, promptInstall } = usePwaInstall();
 
   const [user, setUser] = React.useState<CurrentUser | null>(null);
@@ -244,6 +254,16 @@ export function Navbar() {
               </Button>
             )}
 
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden items-center gap-1.5 rounded-full border-moss-300 text-moss-700 hover:bg-moss-50 sm:flex"
+              onClick={() => setTrackOpen(true)}
+            >
+              <PackageSearch className="h-4 w-4" />
+              Track order
+            </Button>
+
             {/* Push notification bell — always visible, next to account/cart */}
             <NavNotificationBell />
 
@@ -301,10 +321,6 @@ export function Navbar() {
                     <DropdownMenuItem onSelect={() => openAuth("register")}>
                       Register
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/orders">Orders</Link>
-                    </DropdownMenuItem>
                     {canInstall && (
                       <DropdownMenuItem
                         onSelect={promptInstall}
@@ -349,6 +365,18 @@ export function Navbar() {
                 className="pl-10"
               />
             </form>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mb-1 flex items-center justify-center gap-1.5 rounded-full border-moss-300 text-moss-700"
+              onClick={() => {
+                setTrackOpen(true);
+                setMobileOpen(false);
+              }}
+            >
+              <PackageSearch className="h-4 w-4" />
+              Track order
+            </Button>
             {canInstall && (
               <Button
                 variant="outline"
@@ -371,6 +399,7 @@ export function Navbar() {
         defaultTab={authTab}
         onAuthSuccess={fetchCurrentUser}
       />
+      <TrackOrderDialog open={trackOpen} onOpenChange={setTrackOpen} />
     </header>
   );
 }
