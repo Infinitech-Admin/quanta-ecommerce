@@ -29,11 +29,14 @@ module.exports = withPWA({
   // Service worker only makes sense in production.
   disable: process.env.NODE_ENV === "development",
   customWorkerSrc: "worker",
-  // New service workers now wait instead of auto-activating, so we can
-  // show an "update available" prompt and let the user choose when to
-  // apply it (see components/pwa-update-notifier.tsx).
-  skipWaiting: false,
   workboxOptions: {
     disableDevLogs: true,
+    // This is the option that actually controls the generated sw.js —
+    // the top-level `skipWaiting` on withPWA() is NOT read by
+    // @ducanh2912/next-pwa's GenerateSW step. Setting it here makes new
+    // service workers wait instead of auto-activating, so we can prompt
+    // the user first (see components/pwa-update-notifier.tsx).
+    skipWaiting: false,
+    clientsClaim: true,
   },
 })(nextConfig);
