@@ -203,7 +203,7 @@ export default function ProductDetailPage() {
                 </p>
               )}
 
-              <p className="mt-4 text-sm">
+              {/* <p className="mt-4 text-sm">
                 {product.inStock ? (
                   <span className="text-green-700">
                     In stock
@@ -214,7 +214,7 @@ export default function ProductDetailPage() {
                 ) : (
                   <span className="text-destructive">Out of stock</span>
                 )}
-              </p>
+              </p> */}
 
               {/* Quantity + add to cart */}
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">

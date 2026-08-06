@@ -49,7 +49,7 @@ const NAV_ITEMS: NavItem[] = [
     href: "/admin/orders",
     icon: ShoppingCart,
   },
-  { label: "Customers", href: "/admin/customers", icon: Users, disabled: true },
+  { label: "Customers", href: "/admin/customers", icon: Users },
   {
     label: "Settings",
     href: "/admin/settings",
