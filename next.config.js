@@ -29,6 +29,10 @@ module.exports = withPWA({
   // Service worker only makes sense in production.
   disable: process.env.NODE_ENV === "development",
   customWorkerSrc: "worker",
+  // New service workers now wait instead of auto-activating, so we can
+  // show an "update available" prompt and let the user choose when to
+  // apply it (see components/pwa-update-notifier.tsx).
+  skipWaiting: false,
   workboxOptions: {
     disableDevLogs: true,
   },
