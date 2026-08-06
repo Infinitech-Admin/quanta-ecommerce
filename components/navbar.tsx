@@ -12,6 +12,7 @@ import {
   X,
   Download,
   PackageSearch,
+  Store,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -254,6 +255,20 @@ export function Navbar() {
               </Button>
             )}
 
+            {/* Reseller sign-up — customer-facing only; admins get redirected
+                away from this layout before it would ever render for them. */}
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="hidden items-center gap-1.5 rounded-full border-moss-300 text-moss-700 hover:bg-moss-50 sm:flex"
+            >
+              <Link href="/reseller">
+                <Store className="h-4 w-4" />
+                Become a reseller
+              </Link>
+            </Button>
+
             <Button
               variant="outline"
               size="sm"
@@ -298,6 +313,11 @@ export function Navbar() {
                         <Link href="/orders">Orders</Link>
                       </DropdownMenuItem>
                     )}
+                    {!isAdmin && (
+                      <DropdownMenuItem asChild className="sm:hidden">
+                        <Link href="/reseller">Become a reseller</Link>
+                      </DropdownMenuItem>
+                    )}
                     {canInstall && (
                       <DropdownMenuItem
                         onSelect={promptInstall}
@@ -320,6 +340,9 @@ export function Navbar() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => openAuth("register")}>
                       Register
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="sm:hidden">
+                      <Link href="/reseller">Become a reseller</Link>
                     </DropdownMenuItem>
                     {canInstall && (
                       <DropdownMenuItem
@@ -376,6 +399,18 @@ export function Navbar() {
             >
               <PackageSearch className="h-4 w-4" />
               Track order
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="mb-1 flex items-center justify-center gap-1.5 rounded-full border-moss-300 text-moss-700"
+              onClick={() => setMobileOpen(false)}
+            >
+              <Link href="/reseller">
+                <Store className="h-4 w-4" />
+                Become a reseller
+              </Link>
             </Button>
             {canInstall && (
               <Button
