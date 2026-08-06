@@ -30,3 +30,13 @@ self.addEventListener("notificationclick", (event) => {
     }),
   );
 });
+
+// With skipWaiting: false in next.config.js, a newly installed service
+// worker sits in the "waiting" state until told to activate. This message
+// comes from usePwaUpdate() when the user taps "Update" on the
+// update-available toast (see components/pwa-update-notifier.tsx).
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
