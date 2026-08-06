@@ -59,4 +59,3 @@ export function isPromoActive(
   }
   return true;
 }
-//deployment
