@@ -198,9 +198,26 @@ export default function ProductDetailPage() {
               )}
 
               {product.blurb && (
-                <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                  {product.blurb}
-                </p>
+                <div className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                  {product.blurb.includes(",") ? (
+                    <>
+                      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-moss-500">
+                        Specifications
+                      </p>
+                      <ul className="list-disc space-y-1 pl-5">
+                        {product.blurb
+                          .split(",")
+                          .map((item) => item.trim())
+                          .filter(Boolean)
+                          .map((item, i) => (
+                            <li key={i}>{item}</li>
+                          ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <p>{product.blurb}</p>
+                  )}
+                </div>
               )}
 
               {/* <p className="mt-4 text-sm">

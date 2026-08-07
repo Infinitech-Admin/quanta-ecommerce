@@ -89,10 +89,17 @@ export function ProductCard({ product }: { product: Product }) {
         <span className="text-xs font-semibold uppercase tracking-wide text-green-600">
           {product.brand}
         </span>
-        <h3 className="line-clamp-2 font-display text-sm font-medium leading-snug text-moss-900">
+
+        {/* Fixed-height slot: reserves room for 2 lines so a 1-line
+            title doesn't sit taller/shorter than a 2-line title. */}
+        <h3 className="line-clamp-2 min-h-[2.5rem] font-display text-sm font-medium leading-snug text-moss-900">
           {product.name}
         </h3>
-        <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+
+        {/* Fixed-height slot: reserves room for 2 lines even when
+            product.blurb is empty, so cards with/without a blurb
+            still line up their price row at the same height. */}
+        <p className="line-clamp-2 min-h-[2rem] text-xs leading-relaxed text-muted-foreground">
           {product.blurb}
         </p>
 
@@ -142,11 +149,13 @@ export function ProductCard({ product }: { product: Product }) {
   // Sold-out products aren't clickable at all — render as a plain div
   // instead of a Link so there's no navigation, no href, no cursor
   // pointer, and no way to tab into it as a link.
+  // `h-full` makes every card fill its grid cell so all cards in a
+  // row match the tallest one, regardless of title/blurb length.
   if (soldOut) {
     return (
       <div
         aria-disabled="true"
-        className="paper-fold relative flex cursor-not-allowed flex-col overflow-hidden rounded-2xl border border-moss-100 bg-card shadow-sm"
+        className="paper-fold relative flex h-full cursor-not-allowed flex-col overflow-hidden rounded-2xl border border-moss-100 bg-card shadow-sm"
       >
         {cardInner}
       </div>
@@ -156,7 +165,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <Link
       href={buildProductHref(product)}
-      className="paper-fold group relative flex flex-col overflow-hidden rounded-2xl border border-moss-100 bg-card shadow-sm transition-shadow hover:shadow-md"
+      className="paper-fold group relative flex h-full flex-col overflow-hidden rounded-2xl border border-moss-100 bg-card shadow-sm transition-shadow hover:shadow-md"
     >
       {cardInner}
     </Link>

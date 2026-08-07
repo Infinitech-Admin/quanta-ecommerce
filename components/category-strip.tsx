@@ -1,76 +1,96 @@
-// types/product.ts
+"use client";
 
-export type Category = "Paper" | "Personal Care" | "Oral Care" | "Baby Care";
+import * as React from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { CATEGORIES, BRANDS, CATEGORY_LABELS } from "@/types/product";
+import { cn } from "@/lib/utils";
 
-export type Product = {
-  id: string;
-  name: string;
-  brand: string;
-  category: Category;
-  price: number;
-  originalPrice: number | null;
-  rating: number;
-  reviews: number;
-  tag: "Best Seller" | "New" | "Bundle" | "Eco" | null;
-  inStock: boolean;
-  stock: number;
-  blurb: string | null;
-  color: string | null; // tailwind gradient classes for the placeholder art
-  image: string; // relative path from backend, e.g. "/products/xyz.jpg"
-  isPromo: boolean;
-  promoStart: string | null; // ISO date, e.g. "2026-08-01"
-  promoEnd: string | null; // ISO date, e.g. "2026-08-15"
-  totalOrders?: number; // only present on the best-sellers response
-};
+export function CategoryStrip() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeCategory = searchParams.get("category");
+  const activeBrand = searchParams.get("brand");
 
-export const CATEGORIES: Category[] = [
-  "Paper",
-  "Personal Care",
-  "Oral Care",
-  "Baby Care",
-];
+  const goToCategory = (category: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (category) {
+      params.set("category", category);
+    } else {
+      params.delete("category");
+    }
+    params.delete("search");
+    params.delete("brand"); // category and brand filters are mutually exclusive
+    const qs = params.toString();
+    router.push(`/shop${qs ? `?${qs}` : ""}`, { scroll: false });
+  };
 
-// Display-only labels — the underlying Category values stay as "Paper" etc.
-// (they must match what the Laravel backend sends and what's used in URLs
-// and filtering). This map only controls what text shows in the UI.
-export const CATEGORY_LABELS: Record<Category, string> = {
-  Paper: "Paper And Tissue",
-  "Personal Care": "Personal Care",
-  "Oral Care": "Oral Care",
-  "Baby Care": "Baby Care",
-};
+  const goToBrand = (brand: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("brand", brand);
+    params.delete("category");
+    params.delete("search");
+    const qs = params.toString();
+    router.push(`/shop${qs ? `?${qs}` : ""}`, { scroll: false });
+  };
 
-export const BRANDS = [
-  "Fresh",
-  "Kami",
-  "Smart Choice",
-  "Vanitá",
-  "Harmony",
-  "Sweetbaby",
-  "PrimeCare",
-  "Life Defender",
-  "TeaBiotic",
-];
+  return (
+    <div className="w-full border-b border-moss-100 bg-moss-50/40">
+      <div className="container flex items-center gap-6 overflow-x-auto py-3 text-xs font-bold uppercase tracking-wide text-moss-900 scrollbar-hide sm:gap-8 sm:text-sm">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className={cn(
+                "flex shrink-0 items-center gap-1 transition-colors hover:text-green-600",
+                activeBrand && "text-green-600",
+              )}
+            >
+              All Brands
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+          </DropdownMenuTrigger>
+          {/* Landscape / grid layout instead of a single stacked (waterfall)
+              column — wraps into rows across multiple columns. Width is
+              capped so it doesn't run edge-to-edge on wide screens. */}
+          <DropdownMenuContent
+            align="start"
+            className="grid w-[min(90vw,640px)] grid-cols-2 gap-x-2 gap-y-1 p-2 sm:grid-cols-3 md:grid-cols-4"
+          >
+            {BRANDS.map((brand) => (
+              <DropdownMenuItem
+                key={brand}
+                onSelect={() => goToBrand(brand)}
+                className={cn(
+                  "justify-center text-center normal-case",
+                  activeBrand === brand && "bg-green-50 text-green-600",
+                )}
+              >
+                {brand}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-// A promo only counts as "live" if the flag is on AND today falls inside the
-// start/end range (a missing side is treated as open-ended on that side).
-// Shared by the admin panel and the storefront so both agree on what "live" means.
-export function isPromoActive(
-  product: Pick<Product, "isPromo" | "promoStart" | "promoEnd">,
-): boolean {
-  if (!product.isPromo) return false;
-
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-
-  if (product.promoStart) {
-    const start = new Date(product.promoStart);
-    if (now < start) return false;
-  }
-  if (product.promoEnd) {
-    const end = new Date(product.promoEnd);
-    end.setHours(23, 59, 59, 999);
-    if (now > end) return false;
-  }
-  return true;
+        {CATEGORIES.map((category) => (
+          <button
+            key={category}
+            onClick={() => goToCategory(category)}
+            className={cn(
+              "shrink-0 whitespace-nowrap transition-colors hover:text-green-600",
+              activeCategory === category && "text-green-600",
+            )}
+          >
+            {CATEGORY_LABELS[category]}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }

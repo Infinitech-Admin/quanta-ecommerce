@@ -117,7 +117,7 @@ export default function ShopPage() {
   const filtered = React.useMemo(() => {
     const q = searchInput.trim().toLowerCase();
 
-    return products.filter((p) => {
+    const result = products.filter((p) => {
       if (q) {
         const matchesSearch =
           p.name.toLowerCase().includes(q) ||
@@ -141,6 +141,17 @@ export default function ShopPage() {
       if (filters.onSaleOnly && !p.originalPrice) return false;
       return true;
     });
+
+    // Push out-of-stock products to the end without disturbing the relative
+    // order within each group (in-stock items stay in their original order,
+    // same for out-of-stock ones).
+    return result
+      .map((p, i) => ({ p, i }))
+      .sort((a, b) => {
+        const stockDiff = Number(b.p.inStock) - Number(a.p.inStock);
+        return stockDiff !== 0 ? stockDiff : a.i - b.i;
+      })
+      .map(({ p }) => p);
   }, [products, active, filters, searchInput]);
 
   return (
