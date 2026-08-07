@@ -113,12 +113,14 @@ export function AdminSidebar() {
 
   async function handleLogout() {
     try {
-      await fetch("/api/logout", { method: "POST" });
+      await fetch("/api/auth/logout", { method: "POST" });
     } catch {
       // ignore — we redirect regardless
     } finally {
-      router.push("/login");
-      router.refresh();
+      // Hard navigation — bypasses Next's client router cache entirely,
+      // guaranteeing the browser re-requests /login and middleware re-runs
+      // on any subsequent /admin visit.
+      window.location.href = "/login";
     }
   }
 

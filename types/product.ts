@@ -1,6 +1,6 @@
 // types/product.ts
 
-export type Category = "Paper" | "Personal Care" | "Oral Care";
+export type Category = "Paper" | "Personal Care" | "Oral Care" | "Baby Care";
 
 export type Product = {
   id: string;
@@ -23,7 +23,22 @@ export type Product = {
   totalOrders?: number; // only present on the best-sellers response
 };
 
-export const CATEGORIES: Category[] = ["Paper", "Personal Care", "Oral Care"];
+export const CATEGORIES: Category[] = [
+  "Paper",
+  "Personal Care",
+  "Oral Care",
+  "Baby Care",
+];
+
+// Display-only labels — the underlying Category values stay as "Paper" etc.
+// (they must match what the Laravel backend sends and what's used in URLs
+// and filtering). This map only controls what text shows in the UI.
+export const CATEGORY_LABELS: Record<Category, string> = {
+  Paper: "Paper And Tissue",
+  "Personal Care": "Personal Care",
+  "Oral Care": "Oral Care",
+  "Baby Care": "Baby Care",
+};
 
 export const BRANDS = [
   "Fresh",
@@ -59,4 +74,3 @@ export function isPromoActive(
   }
   return true;
 }
-

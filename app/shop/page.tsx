@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { SlidersHorizontal } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
@@ -20,12 +20,14 @@ import {
   DEFAULT_FILTERS,
   type Filters,
 } from "@/components/filter-sidebar";
-import { CATEGORIES, type Product } from "@/types/product";
+import { CATEGORIES, CATEGORY_LABELS, type Product } from "@/types/product";
 import { buildProductHref } from "@/lib/slug";
 
 const ALL = "All items" as const;
 
 export default function ShopPage() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [products, setProducts] = React.useState<Product[]>([]);
   const [status, setStatus] = React.useState<"loading" | "ready" | "error">(
@@ -66,6 +68,22 @@ export default function ShopPage() {
       brands: urlBrand ? [urlBrand] : [],
     }));
   }, [searchParams]);
+
+  // Fired when the user clicks a category tab. Updates local state right
+  // away (so filtering feels instant) and pushes the category onto the URL
+  // so the address bar stays accurate and shareable/refreshable.
+  const handleCategoryChange = (value: string) => {
+    setActive(value);
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === ALL) {
+      params.delete("category");
+    } else {
+      params.set("category", value);
+    }
+    const qs = params.toString();
+    router.push(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+  };
 
   const fetchProducts = React.useCallback(async () => {
     setStatus("loading");
@@ -108,7 +126,14 @@ export default function ShopPage() {
         if (!matchesSearch) return false;
       }
 
-      if (active !== ALL && p.category !== active) return false;
+      if (active === "Baby Care") {
+        // Baby Care has no products actually tagged with that category yet —
+        // it's really just the Sweetbaby brand's products.
+        if (p.brand !== "Sweetbaby") return false;
+      } else if (active !== ALL && p.category !== active) {
+        return false;
+      }
+
       if (filters.brands.length && !filters.brands.includes(p.brand))
         return false;
       if (p.price > filters.maxPrice) return false;
@@ -156,7 +181,7 @@ export default function ShopPage() {
           </Button>
         </div>
 
-        <Tabs value={active} onValueChange={setActive}>
+        <Tabs value={active} onValueChange={handleCategoryChange}>
           <TabsList className="mb-8 flex-wrap h-auto">
             <TabsTrigger
               value={ALL}
@@ -170,7 +195,7 @@ export default function ShopPage() {
                 value={cat}
                 className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
               >
-                {cat}
+                {CATEGORY_LABELS[cat]}
               </TabsTrigger>
             ))}
           </TabsList>
