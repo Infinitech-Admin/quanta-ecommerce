@@ -1,6 +1,11 @@
 // types/product.ts
 
-export type Category = "Paper" | "Personal Care" | "Oral Care" | "Baby Care";
+export type Category =
+  | "Paper"
+  | "Personal Care"
+  | "Oral Care"
+  | "Baby Care"
+  | "Health and Beauty";
 
 export type Product = {
   id: string;
@@ -28,6 +33,7 @@ export const CATEGORIES: Category[] = [
   "Personal Care",
   "Oral Care",
   "Baby Care",
+  "Health and Beauty",
 ];
 
 // Display-only labels — the underlying Category values stay as "Paper" etc.
@@ -38,6 +44,7 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   "Personal Care": "Personal Care",
   "Oral Care": "Oral Care",
   "Baby Care": "Baby Care",
+  "Health and Beauty": "Health and Beauty",
 };
 
 export const BRANDS = [
@@ -50,6 +57,7 @@ export const BRANDS = [
   "PrimeCare",
   "Life Defender",
   "TeaBiotic",
+  "Eco Hygiene",
 ];
 
 // A promo only counts as "live" if the flag is on AND today falls inside the
@@ -74,7 +82,3 @@ export function isPromoActive(
   }
   return true;
 }
-<<<<<<< HEAD
-=======
-//deployment
->>>>>>> abdf7f7834aa2aa854f21aa901eedf96a71d887e
