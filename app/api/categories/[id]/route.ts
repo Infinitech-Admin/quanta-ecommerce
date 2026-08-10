@@ -1,10 +1,10 @@
-// 📁 PUT THIS FILE AT: app/api/categories/[id]/route.ts
+// 📁 app/api/categories/[id]/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL; // e.g. http://localhost:8000/api
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// GET /api/categories/[id] -> proxies Laravel, plain passthrough.
+// GET is public in Laravel — no auth needed, left as-is.
 export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string } },
@@ -21,45 +21,49 @@ export async function GET(
   }
 
   const category = await res.json();
-
   return NextResponse.json(category);
 }
 
-// POST /api/categories/[id] -> forwards a multipart upload to Laravel to
-// UPDATE an existing category. Laravel's update route uses POST rather
-// than PUT/PATCH because PHP won't parse multipart bodies on those verbs
-// — the image field is optional, so omitting it just updates the text
-// fields and keeps the existing file.
+// POST (update) -> requires auth:sanctum in Laravel
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  const token = req.cookies.get("auth_token")?.value;
   const formData = await req.formData();
 
   const res = await fetch(`${API_URL}/categories/${params.id}`, {
     method: "POST",
+    headers: {
+      Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: formData,
   });
 
-  const data = await res.json();
-
+  const data = await res.json().catch(() => ({}));
   return NextResponse.json(data, { status: res.status });
 }
 
-// DELETE /api/categories/[id] -> forwards deletion to Laravel.
+// DELETE -> requires auth:sanctum in Laravel
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  const token = req.cookies.get("auth_token")?.value;
+
   const res = await fetch(`${API_URL}/categories/${params.id}`, {
     method: "DELETE",
+    headers: {
+      Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
   });
 
   if (res.status === 204) {
     return new NextResponse(null, { status: 204 });
   }
 
-  const data = await res.json();
-
+  const data = await res.json().catch(() => ({}));
   return NextResponse.json(data, { status: res.status });
 }
