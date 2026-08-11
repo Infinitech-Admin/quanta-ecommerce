@@ -65,7 +65,7 @@ export default async function RootLayout({
       )}
     >
       <body className="flex min-h-screen flex-col">
-        <CursorTissueTrail />
+        {/* <CursorTissueTrail /> */}
         <CartProvider userId={userId}>
           <LoadingAnimated className="flex min-h-screen flex-1 flex-col">
             {children}

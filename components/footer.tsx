@@ -329,6 +329,17 @@ export function Footer() {
             reserved.
           </p>
           <p>Proudly serving Filipino homes and businesses since 1995.</p>
+          <p>
+            Powered by{" "}
+            <a
+              href="https://www.infinitechphil.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-moss-200 transition-colors hover:text-white"
+            >
+              Infinitech Advertising Corporation
+            </a>
+          </p>
         </div>
       </div>
     </footer>

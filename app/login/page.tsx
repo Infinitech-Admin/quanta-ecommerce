@@ -120,7 +120,7 @@ export default function LoginPage() {
             </label>
 
             <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 text-[#1F2A1B]/70">
+              {/* <label className="flex items-center gap-2 text-[#1F2A1B]/70">
                 <input
                   type="checkbox"
                   checked={rememberMe}
@@ -128,13 +128,13 @@ export default function LoginPage() {
                   className="h-4 w-4 rounded-none border-[#1F2A1B]/30 text-[#2F5C41] focus:ring-[#2F5C41]/30"
                 />
                 Remember me
-              </label>
-              <a
+              </label> */}
+              {/* <a
                 href="#"
                 className="font-medium text-[#2F5C41] underline decoration-transparent underline-offset-4 transition hover:decoration-[#2F5C41]"
               >
                 Forgot password?
-              </a>
+              </a> */}
             </div>
 
             <button
