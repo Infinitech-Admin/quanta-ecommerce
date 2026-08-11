@@ -10,6 +10,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Slide = {
   id: number;
@@ -162,8 +163,8 @@ function HeroCarousel({ slides }: { slides: Slide[] }) {
 
 function HeroCarouselSkeleton() {
   return (
-    <div
-      className="w-full animate-pulse rounded-2xl bg-moss-900/10"
+    <Skeleton
+      className="w-full rounded-2xl"
       style={{ aspectRatio: FALLBACK_ASPECT_RATIO }}
     />
   );

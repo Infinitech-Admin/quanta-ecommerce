@@ -12,6 +12,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCart } from "@/context/cart-context";
 import { formatPHP } from "@/lib/utils";
 import type { Category, Product } from "@/types/product";
@@ -217,13 +218,10 @@ function CardsSkeleton({ width }: { width: number }) {
   return (
     <div className="flex gap-3 overflow-hidden sm:gap-5">
       {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="flex-shrink-0 animate-pulse" style={{ width }}>
-          <div
-            className="rounded-2xl bg-moss-100"
-            style={{ aspectRatio: "1 / 1" }}
-          />
-          <div className="mt-2 h-2.5 w-2/3 rounded bg-moss-100" />
-          <div className="mt-1.5 h-2.5 w-1/2 rounded bg-moss-100" />
+        <div key={i} className="flex-shrink-0" style={{ width }}>
+          <Skeleton className="aspect-square rounded-2xl" />
+          <Skeleton className="mt-2 h-2.5 w-2/3" />
+          <Skeleton className="mt-1.5 h-2.5 w-1/2" />
         </div>
       ))}
     </div>
