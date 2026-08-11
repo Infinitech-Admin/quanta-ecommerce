@@ -1,6 +1,10 @@
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { SectionPaperBackground } from "@/components/section-wave-background";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const COLLECTIONS = [
   {
@@ -32,17 +36,23 @@ function CollectionCard({
   collection: (typeof COLLECTIONS)[number];
   className?: string;
 }) {
+  const [loaded, setLoaded] = React.useState(false);
+
   return (
     <Link
       href={collection.href}
       className={`group relative block overflow-hidden rounded-2xl bg-green-700 shadow-sm transition-shadow hover:shadow-xl ${className}`}
     >
+      {!loaded && <Skeleton className="absolute inset-0 rounded-none" />}
       <Image
         src={collection.image}
         alt={collection.name}
         fill
         sizes="(min-width: 1024px) 50vw, 100vw"
-        className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-105"
+        className={`object-cover object-center transition-all duration-500 ease-out group-hover:scale-105 ${
+          loaded ? "opacity-100" : "opacity-0"
+        }`}
+        onLoadingComplete={() => setLoaded(true)}
       />
     </Link>
   );

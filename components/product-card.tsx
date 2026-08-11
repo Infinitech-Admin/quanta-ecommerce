@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Star, ShoppingBag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Product } from "@/types/product";
 import { useCart } from "@/context/cart-context";
 import { formatPHP } from "@/lib/utils";
@@ -169,5 +170,29 @@ export function ProductCard({ product }: { product: Product }) {
     >
       {cardInner}
     </Link>
+  );
+}
+
+// Loading placeholder that mirrors ProductCard's real layout (image block,
+// brand line, two-line title slot, two-line blurb slot, price pill, and
+// the add-to-cart button) so the grid doesn't shift once real cards load in.
+export function ProductCardSkeleton() {
+  return (
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-moss-100 bg-card shadow-sm">
+      <Skeleton className="aspect-[4/3] w-full rounded-none" />
+
+      <div className="flex flex-1 flex-col gap-1 p-3.5">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="mt-1 h-4 w-full" />
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="mt-1 h-3 w-full" />
+        <Skeleton className="h-3 w-3/4" />
+
+        <div className="mt-auto flex items-center justify-between pt-2">
+          <Skeleton className="h-6 w-16 rounded-md" />
+          <Skeleton className="h-9 w-9 rounded-md" />
+        </div>
+      </div>
+    </div>
   );
 }

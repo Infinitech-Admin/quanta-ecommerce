@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, CalendarClock, Sparkles } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatPHP } from "@/lib/utils";
 import { SectionPromoBackground } from "@/components/section-wave-background";
 import type { Category } from "@/types/product";
@@ -148,17 +149,10 @@ function PromoHighlightsSkeleton() {
   return (
     <div className="flex gap-3 overflow-hidden">
       {Array.from({ length: 5 }).map((_, i) => (
-        <div
-          key={i}
-          className="flex-shrink-0 animate-pulse"
-          style={{ width: CARD_WIDTH }}
-        >
-          <div
-            className="rounded-xl bg-moss-100"
-            style={{ aspectRatio: "1 / 1" }}
-          />
-          <div className="mt-2 h-2.5 w-2/3 rounded bg-moss-100" />
-          <div className="mt-1.5 h-2.5 w-1/2 rounded bg-moss-100" />
+        <div key={i} className="flex-shrink-0" style={{ width: CARD_WIDTH }}>
+          <Skeleton className="rounded-xl" style={{ aspectRatio: "1 / 1" }} />
+          <Skeleton className="mt-2 h-2.5 w-2/3" />
+          <Skeleton className="mt-1.5 h-2.5 w-1/2" />
         </div>
       ))}
     </div>

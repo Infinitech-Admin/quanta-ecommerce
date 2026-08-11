@@ -14,7 +14,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { ProductCard } from "@/components/product-card";
+import { ProductCard, ProductCardSkeleton } from "@/components/product-card";
 import {
   FilterSidebar,
   DEFAULT_FILTERS,
@@ -222,10 +222,7 @@ export default function ShopPage() {
               {status === "loading" ? (
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 xl:grid-cols-4">
                   {Array.from({ length: 8 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-[280px] animate-pulse rounded-2xl bg-moss-100"
-                    />
+                    <ProductCardSkeleton key={i} />
                   ))}
                 </div>
               ) : status === "error" ? (

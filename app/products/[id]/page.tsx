@@ -17,6 +17,7 @@ import {
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatPHP } from "@/lib/utils";
 import type { Product } from "@/types/product";
 import { useCart } from "@/context/cart-context";
@@ -34,6 +35,46 @@ function resolveImageUrl(path: string | null | undefined): string {
     return path;
   }
   return `${IMAGE_BASE_URL}${path}`;
+}
+
+// Loading placeholder mirroring the real two-column layout below: a square
+// image block on the left, and brand/title/rating/price/description/
+// quantity+cart on the right, so there's no layout jump once the product
+// loads in.
+function ProductDetailSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
+      <Skeleton className="aspect-square w-full rounded-2xl" />
+
+      <div className="flex flex-col">
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="mt-2 h-8 w-3/4" />
+
+        <Skeleton className="mt-3 h-4 w-32" />
+
+        <Skeleton className="mt-4 h-8 w-40" />
+
+        <Skeleton className="mt-3 h-5 w-24 rounded-full" />
+
+        <div className="mt-4 space-y-2">
+          <Skeleton className="h-3 w-28" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <Skeleton className="h-10 w-28 rounded-full" />
+          <Skeleton className="h-11 flex-1 rounded-md" />
+        </div>
+
+        <div className="mt-8 flex flex-col gap-3 border-t border-moss-100 pt-6 sm:flex-row sm:gap-6">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-4 w-40" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function ProductDetailPage() {
@@ -116,10 +157,7 @@ export default function ProductDetailPage() {
         </button>
 
         {loading ? (
-          <div className="flex flex-col items-center gap-3 py-24 text-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-moss-200 border-t-forest" />
-            <p className="text-sm text-muted-foreground">Loading product...</p>
-          </div>
+          <ProductDetailSkeleton />
         ) : error || !product ? (
           <div className="flex flex-col items-center gap-3 py-24 text-center">
             <PackageX className="h-10 w-10 text-moss-400" />
@@ -219,19 +257,6 @@ export default function ProductDetailPage() {
                   )}
                 </div>
               )}
-
-              {/* <p className="mt-4 text-sm">
-                {product.inStock ? (
-                  <span className="text-green-700">
-                    In stock
-                    {typeof product.stock === "number"
-                      ? ` (${product.stock} available)`
-                      : ""}
-                  </span>
-                ) : (
-                  <span className="text-destructive">Out of stock</span>
-                )}
-              </p> */}
 
               {/* Quantity + add to cart */}
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
