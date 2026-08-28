@@ -208,7 +208,7 @@ export default function ProductDetailPage() {
                 {product.name}
               </h1>
 
-              {(product.rating || product.reviews) && (
+              {/* {(product.rating || product.reviews) && (
                 <div className="mt-2 flex items-center gap-1.5 text-sm text-moss-600">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   <span className="font-medium">{product.rating}</span>
@@ -216,7 +216,7 @@ export default function ProductDetailPage() {
                     ({product.reviews} reviews)
                   </span>
                 </div>
-              )}
+              )} */}
 
               <div className="mt-4 flex items-baseline gap-2">
                 <span className="font-mono text-2xl font-semibold text-moss-900 sm:text-3xl">
