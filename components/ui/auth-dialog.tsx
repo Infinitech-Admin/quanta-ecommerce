@@ -196,12 +196,12 @@ export function AuthDialog({
               >
                 {loginSubmitting ? "Logging in…" : "Log in"}
               </Button>
-              <p className="text-center text-xs text-muted-foreground">
+              {/* <p className="text-center text-xs text-muted-foreground">
                 Forgot your password?{" "}
                 <a href="#" className="underline">
                   Reset it
                 </a>
-              </p>
+              </p> */}
             </form>
           </TabsContent>
 
