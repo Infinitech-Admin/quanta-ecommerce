@@ -13,6 +13,7 @@ import {
   Download,
   PackageSearch,
   Store,
+  LayoutGrid,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -243,6 +244,19 @@ export function Navbar() {
           </form>
 
           <div className="ml-auto flex items-center gap-2">
+            {/* Shop link */}
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="hidden items-center gap-1.5 rounded-full border-moss-300 text-moss-700 hover:bg-moss-50 sm:flex"
+            >
+              <Link href="/shop">
+                <ShoppingBag className="h-4 w-4" />
+                Shop
+              </Link>
+            </Button>
+
             {canInstall && (
               <Button
                 variant="outline"
@@ -388,6 +402,21 @@ export function Navbar() {
                 className="pl-10"
               />
             </form>
+
+            {/* Shop link */}
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="mb-1 flex items-center justify-center gap-1.5 rounded-full border-moss-300 text-moss-700"
+              onClick={() => setMobileOpen(false)}
+            >
+              <Link href="/shop">
+                <LayoutGrid className="h-4 w-4" />
+                Shop
+              </Link>
+            </Button>
+
             <Button
               variant="outline"
               size="sm"
