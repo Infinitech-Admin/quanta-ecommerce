@@ -259,18 +259,18 @@ export default function ProductDetailPage() {
               )}
 
               {/* Quantity + add to cart */}
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="flex items-center rounded-full border border-moss-200">
+              <div className="mt-6 flex items-center gap-3">
+                <div className="flex h-11 shrink-0 items-center rounded-full border border-moss-200">
                   <button
                     type="button"
                     disabled={!canAddToCart || quantity <= 1}
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="flex h-10 w-10 items-center justify-center text-moss-600 disabled:opacity-40"
+                    className="flex h-10 w-9 items-center justify-center text-moss-600 disabled:opacity-40 sm:w-10"
                     aria-label="Decrease quantity"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
-                  <span className="w-8 text-center text-sm font-medium text-moss-900">
+                  <span className="w-6 text-center text-sm font-medium text-moss-900 sm:w-8">
                     {quantity}
                   </span>
                   <button
@@ -279,7 +279,7 @@ export default function ProductDetailPage() {
                     onClick={() =>
                       setQuantity((q) => Math.min(maxQuantity, q + 1))
                     }
-                    className="flex h-10 w-10 items-center justify-center text-moss-600 disabled:opacity-40"
+                    className="flex h-10 w-9 items-center justify-center text-moss-600 disabled:opacity-40 sm:w-10"
                     aria-label="Increase quantity"
                   >
                     <Plus className="h-4 w-4" />
@@ -292,17 +292,19 @@ export default function ProductDetailPage() {
                   onClick={handleAddToCart}
                   className={
                     canAddToCart
-                      ? "flex-1 bg-green-600 hover:bg-green-700"
-                      : "flex-1"
+                      ? "h-11 min-w-0 flex-1 bg-green-600 hover:bg-green-700"
+                      : "h-11 min-w-0 flex-1"
                   }
                   variant={canAddToCart ? "default" : "outline"}
                 >
-                  <ShoppingBag className="mr-2 h-4 w-4" />
-                  {justAdded
-                    ? "Added to cart!"
-                    : canAddToCart
-                      ? "Add to cart"
-                      : "Out of stock"}
+                  <ShoppingBag className="mr-2 h-4 w-4 shrink-0" />
+                  <span className="truncate">
+                    {justAdded
+                      ? "Added to cart!"
+                      : canAddToCart
+                        ? "Add to cart"
+                        : "Out of stock"}
+                  </span>
                 </Button>
               </div>
 
