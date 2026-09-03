@@ -1,4 +1,4 @@
-// types/product.ts
+
 
 export type Category =
   | "Paper"
