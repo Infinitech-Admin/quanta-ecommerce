@@ -71,7 +71,7 @@ export default async function RootLayout({
             {children}
           </LoadingAnimated>
         </CartProvider>
-        <Toaster />
+        <Toaster closeButton />
         <PwaUpdateNotifier />
         <NotificationPromptBanner />
       </body>
