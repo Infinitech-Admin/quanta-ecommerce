@@ -253,25 +253,6 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Shop */}
-        <div className="col-span-1 lg:col-span-2">
-          <h4 className="font-display text-sm font-semibold uppercase tracking-wide text-moss-300">
-            Shop
-          </h4>
-          <ul className="mt-4 space-y-2.5 text-sm text-moss-200">
-            {CATEGORIES.map((cat) => (
-              <li key={cat}>
-                <Link
-                  href={`/?category=${encodeURIComponent(cat)}#shop`}
-                  className="transition-colors hover:text-white"
-                >
-                  {cat}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-
         {/* Help */}
         <div className="col-span-1 lg:col-span-2">
           <h4 className="font-display text-sm font-semibold uppercase tracking-wide text-moss-300">
