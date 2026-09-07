@@ -3,11 +3,14 @@
 import * as React from "react";
 import type { Product } from "@/types/product";
 
-// The cart only ever needs these fields to render — pulling in the full
-// Product shape (brand, rating, promo dates, etc.) forces every caller to
-// fabricate filler values it doesn't have (e.g. rebuilding a cart line from
-// an order record, which only stores id/name/price/image).
-export type CartProduct = Pick<Product, "id" | "name" | "price" | "image">;
+// The cart only ever needs these fields to render (see cart-sheet.tsx) —
+// pulling in the full Product shape forces every caller to fabricate
+// filler values it doesn't have (e.g. rebuilding a cart line from an
+// order record, which only stores id/name/price/image/brand).
+export type CartProduct = Pick<
+  Product,
+  "id" | "name" | "price" | "image" | "brand"
+>;
 
 export type CartLine = {
   product: CartProduct;

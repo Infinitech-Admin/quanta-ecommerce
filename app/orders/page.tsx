@@ -50,9 +50,8 @@ type OrderItem = {
   name: string;
   price: number | string;
   qty: number;
-  // From the joined live product record (see OrderItem.php's `image`
-  // accessor) — null if that product was later deleted.
   image: string | null;
+  brand: string | null;
 };
 
 type Order = {
@@ -242,6 +241,7 @@ function OrderCard({ order }: { order: Order }) {
           name: item.name,
           price: Number(item.price),
           image: item.image ?? "",
+          brand: item.brand ?? "",
         },
         item.qty,
       );
