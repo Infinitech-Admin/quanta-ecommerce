@@ -6,10 +6,49 @@ function log(...args: unknown[]) {
   if (isDev) console.log("[middleware]", ...args);
 }
 
+function buildCspHeader(nonce: string) {
+  const csp = `
+    default-src 'self';
+    script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""};
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data: https:;
+    font-src 'self';
+    connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL ?? ""};
+    frame-ancestors 'none';
+  `;
+  return csp.replace(/\s{2,}/g, " ").trim();
+}
+
+// Applies the nonce + CSP header to any NextResponse before it's returned.
+function withCsp(response: NextResponse, nonce: string, cspHeader: string) {
+  response.headers.set("x-nonce", nonce);
+  response.headers.set("Content-Security-Policy", cspHeader);
+  return response;
+}
+
 export async function middleware(request: NextRequest) {
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const cspHeader = buildCspHeader(nonce);
+
+  // Pass the nonce + CSP through on the request too, so Next.js can read
+  // it via headers() in Server Components and attach it to framework scripts.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", cspHeader);
+
+  const pathname = request.nextUrl.pathname;
+
+  // --- Non-admin routes: just attach CSP and continue ---
+  if (!pathname.startsWith("/admin")) {
+    const response = NextResponse.next({
+      request: { headers: requestHeaders },
+    });
+    return withCsp(response, nonce, cspHeader);
+  }
+
+  // --- Admin routes: auth + role check, same as before ---
   const token = request.cookies.get("auth_token")?.value;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  const pathname = request.nextUrl.pathname;
 
   log("path:", pathname, "| token present:", !!token);
 
@@ -19,12 +58,12 @@ export async function middleware(request: NextRequest) {
 
   if (!token) {
     log("no token -> /login");
-    return NextResponse.redirect(loginUrl);
+    return withCsp(NextResponse.redirect(loginUrl), nonce, cspHeader);
   }
 
   if (!apiUrl) {
     log("no apiUrl configured -> /login");
-    return NextResponse.redirect(loginUrl);
+    return withCsp(NextResponse.redirect(loginUrl), nonce, cspHeader);
   }
 
   try {
@@ -43,24 +82,29 @@ export async function middleware(request: NextRequest) {
       log("/me not ok -> /login");
       const response = NextResponse.redirect(loginUrl);
       response.cookies.delete("auth_token"); // stale/invalid token, clear it here too
-      return response;
+      return withCsp(response, nonce, cspHeader);
     }
 
     const role = data?.user?.role;
 
     if (role !== "admin") {
       log("role check failed -> /");
-      return NextResponse.redirect(homeUrl);
+      return withCsp(NextResponse.redirect(homeUrl), nonce, cspHeader);
     }
   } catch (err) {
     log("fetch threw:", err);
-    return NextResponse.redirect(loginUrl);
+    return withCsp(NextResponse.redirect(loginUrl), nonce, cspHeader);
   }
 
   log("passed -> continuing to admin");
-  return NextResponse.next();
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+  return withCsp(response, nonce, cspHeader);
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  // Runs on everything except static assets/api, so CSP applies site-wide
+  // while the admin auth branch only triggers for /admin/:path*.
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };
