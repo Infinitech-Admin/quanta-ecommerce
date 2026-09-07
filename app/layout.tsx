@@ -64,7 +64,7 @@ export default async function RootLayout({
         "font-sans",
       )}
     >
-      <body className="flex min-h-screen flex-col">
+      <body className="flex min-h-screen w-full flex-col overflow-x-hidden">
         {/* <CursorTissueTrail /> */}
         <CartProvider userId={userId}>
           <LoadingAnimated className="flex min-h-screen flex-1 flex-col">

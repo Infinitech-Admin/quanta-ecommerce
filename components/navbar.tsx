@@ -206,9 +206,11 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40 w-full">
       <div className="border-b border-moss-100 bg-background/95 backdrop-blur">
-        <div className="container flex h-20 items-center gap-4">
+        {/* Row height + gap now scale up from mobile instead of being
+            fixed at the desktop size — this was the main overflow source. */}
+        <div className="container flex h-16 items-center gap-2 sm:h-20 sm:gap-4">
           <button
-            className="rounded-full p-2 hover:bg-moss-50 lg:hidden"
+            className="shrink-0 rounded-full p-2 hover:bg-moss-50 lg:hidden"
             onClick={() => setMobileOpen((v) => !v)}
             aria-label="Toggle menu"
           >
@@ -220,13 +222,15 @@ export function Navbar() {
           </button>
 
           <Link href="/" className="group flex shrink-0 items-center">
+            {/* Logo scales up across breakpoints instead of being
+                near-full-size on phones. */}
             <Image
               src="/logo.png"
               alt="Quanta Paper Corporation"
               width={220}
               height={64}
               priority
-              className="h-12 w-auto transition-transform duration-300 ease-out group-hover:scale-105 sm:h-14"
+              className="h-8 w-auto transition-transform duration-300 ease-out group-hover:scale-105 sm:h-12 lg:h-14"
             />
           </Link>
 
@@ -243,7 +247,8 @@ export function Navbar() {
             />
           </form>
 
-          <div className="ml-auto flex items-center gap-2">
+          {/* Tighter gap on mobile between the icon cluster */}
+          <div className="ml-auto flex items-center gap-1 sm:gap-2">
             {/* Shop link */}
             <Button
               asChild
@@ -298,14 +303,15 @@ export function Navbar() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
+                {/* Smaller tap target on mobile, full size at sm+ */}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-12 w-12 rounded-full [&_svg]:h-7 [&_svg]:w-7"
+                  className="h-10 w-10 rounded-full [&_svg]:h-5 [&_svg]:w-5 sm:h-12 sm:w-12 sm:[&_svg]:h-7 sm:[&_svg]:w-7"
                   aria-label="Account"
                 >
                   {!userLoading && initials ? (
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-moss-700 text-xs font-bold text-white">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-moss-700 text-[11px] font-bold text-white sm:h-8 sm:w-8 sm:text-xs">
                       {initials}
                     </span>
                   ) : (
@@ -371,10 +377,11 @@ export function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Same mobile/desktop size split as the account button */}
             <Button
               variant="ghost"
               size="icon"
-              className="relative h-12 w-12 rounded-full [&_svg]:h-7 [&_svg]:w-7"
+              className="relative h-10 w-10 rounded-full [&_svg]:h-5 [&_svg]:w-5 sm:h-12 sm:w-12 sm:[&_svg]:h-7 sm:[&_svg]:w-7"
               aria-label="Open cart"
               onClick={() => setCartOpen(true)}
             >

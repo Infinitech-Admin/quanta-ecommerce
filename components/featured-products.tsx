@@ -412,7 +412,7 @@ export function FeaturedProducts() {
         ) : (
           <div
             ref={scrollerRef}
-            className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:gap-5 sm:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 ..."
           >
             {isPromos
               ? highlights.map((product) => (
