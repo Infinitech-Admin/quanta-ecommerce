@@ -4,12 +4,22 @@ const withPWA = require("@ducanh2912/next-pwa").default;
 const nextConfig = {
   images: {
     remotePatterns: [
-      { protocol: "http", hostname: "localhost", port: "8000" },
-      { protocol: "https", hostname: "infinitech-api17.site" },
-      { protocol: "https", hostname: "**" },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "8000",
+      },
+      {
+        protocol: "https",
+        hostname: "infinitech-api17.site",
+      },
+      {
+        protocol: "https",
+        hostname: "**",
+      },
     ],
   },
-  // headers() CSP block removed — handled in middleware.ts now
+  // No headers() function here anymore — CSP is set in middleware.ts instead
 };
 
 module.exports = withPWA({

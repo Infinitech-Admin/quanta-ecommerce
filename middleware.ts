@@ -6,14 +6,26 @@ function log(...args: unknown[]) {
   if (isDev) console.log("[middleware]", ...args);
 }
 
+function getApiOrigin() {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) return "";
+  try {
+    return new URL(apiUrl).origin; // strips any /api path, keeps just https://infinitech-api17.site
+  } catch {
+    return "";
+  }
+}
+
 function buildCspHeader(nonce: string) {
+  const apiOrigin = getApiOrigin();
+
   const csp = `
     default-src 'self';
     script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""};
     style-src 'self' 'unsafe-inline';
     img-src 'self' data: https:;
     font-src 'self';
-    connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL ?? ""};
+    connect-src 'self' ${apiOrigin};
     frame-ancestors 'none';
   `;
   return csp.replace(/\s{2,}/g, " ").trim();
@@ -46,7 +58,7 @@ export async function middleware(request: NextRequest) {
     return withCsp(response, nonce, cspHeader);
   }
 
-  // --- Admin routes: auth + role check, same as before ---
+  // --- Admin routes: auth + role check ---
   const token = request.cookies.get("auth_token")?.value;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
