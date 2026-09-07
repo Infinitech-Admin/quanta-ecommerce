@@ -1,4 +1,4 @@
-//types
+
 
 export type Category =
   | "Paper"
