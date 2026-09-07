@@ -3,14 +3,20 @@
 import * as React from "react";
 import type { Product } from "@/types/product";
 
+// The cart only ever needs these fields to render — pulling in the full
+// Product shape (brand, rating, promo dates, etc.) forces every caller to
+// fabricate filler values it doesn't have (e.g. rebuilding a cart line from
+// an order record, which only stores id/name/price/image).
+export type CartProduct = Pick<Product, "id" | "name" | "price" | "image">;
+
 export type CartLine = {
-  product: Product;
+  product: CartProduct;
   qty: number;
 };
 
 type CartContextValue = {
   lines: CartLine[];
-  addItem: (product: Product) => void;
+  addItem: (product: CartProduct, qty?: number) => void;
   removeItem: (id: string) => void;
   setQty: (id: string, qty: number) => void;
   clear: () => void;
@@ -87,15 +93,18 @@ export function CartProvider({
     }
   }, [lines, storageKey, hydrated]);
 
-  const addItem = React.useCallback((product: Product) => {
+  // qty defaults to 1 (normal "add to cart" click). Callers that need to
+  // add a specific quantity in one shot — e.g. "buy again" on a past
+  // order — pass it explicitly.
+  const addItem = React.useCallback((product: CartProduct, qty: number = 1) => {
     setLines((prev) => {
       const existing = prev.find((l) => l.product.id === product.id);
       if (existing) {
         return prev.map((l) =>
-          l.product.id === product.id ? { ...l, qty: l.qty + 1 } : l,
+          l.product.id === product.id ? { ...l, qty: l.qty + qty } : l,
         );
       }
-      return [...prev, { product, qty: 1 }];
+      return [...prev, { product, qty }];
     });
   }, []);
 

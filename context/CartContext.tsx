@@ -24,7 +24,7 @@ type CartContextValue = {
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
-  addItem: (product: Product) => void;
+  addItem: (product: Product, qty?: number) => void;
   removeItem: (id: string) => void;
   setQty: (id: string, qty: number) => void;
   subtotal: number;
@@ -40,15 +40,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
 
-  const addItem = useCallback((product: Product) => {
+  // qty defaults to 1 (a normal "Add to Cart" click). Callers that need
+  // to add a specific quantity in one shot — e.g. "buy again" on a past
+  // order — pass it explicitly.
+  const addItem = useCallback((product: Product, qty: number = 1) => {
     setLines((prev) => {
       const existing = prev.find((l) => l.id === product.id);
       if (existing) {
         return prev.map((l) =>
-          l.id === product.id ? { ...l, qty: l.qty + 1 } : l
+          l.id === product.id ? { ...l, qty: l.qty + qty } : l,
         );
       }
-      return [...prev, { ...product, qty: 1 }];
+      return [...prev, { ...product, qty }];
     });
     setIsOpen(true);
   }, []);
@@ -61,17 +64,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setLines((prev) =>
       prev
         .map((l) => (l.id === id ? { ...l, qty: Math.max(1, qty) } : l))
-        .filter((l) => l.qty > 0)
+        .filter((l) => l.qty > 0),
     );
   }, []);
 
   const subtotal = useMemo(
     () => lines.reduce((sum, l) => sum + l.price * l.qty, 0),
-    [lines]
+    [lines],
   );
   const itemCount = useMemo(
     () => lines.reduce((sum, l) => sum + l.qty, 0),
-    [lines]
+    [lines],
   );
 
   const value: CartContextValue = {

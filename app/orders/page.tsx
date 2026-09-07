@@ -18,6 +18,7 @@ import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { formatPHP } from "@/lib/utils";
 import { AuthDialog } from "@/components/auth-dialog";
+import { useCart } from "@/context/cart-context";
 
 function OrdersPageBackground() {
   return (
@@ -49,6 +50,9 @@ type OrderItem = {
   name: string;
   price: number | string;
   qty: number;
+  // From the joined live product record (see OrderItem.php's `image`
+  // accessor) — null if that product was later deleted.
+  image: string | null;
 };
 
 type Order = {
@@ -205,6 +209,8 @@ function StatusBadge({ status }: { status: OrderStatus }) {
 function OrderCard({ order }: { order: Order }) {
   const [open, setOpen] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
+  const [reordered, setReordered] = React.useState(false);
+  const { addItem } = useCart();
 
   const date = new Date(order.created_at).toLocaleDateString("en-PH", {
     year: "numeric",
@@ -222,6 +228,26 @@ function OrderCard({ order }: { order: Order }) {
     } catch {
       // Clipboard not available — silently ignore.
     }
+  };
+
+  // Re-add every item from this order to the cart at its original
+  // price/qty. Doesn't touch stock/availability — the cart/checkout
+  // flow is responsible for catching anything that's no longer sellable.
+  const buyAgain = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    order.items.forEach((item) => {
+      addItem(
+        {
+          id: item.product_id,
+          name: item.name,
+          price: Number(item.price),
+          image: item.image ?? "",
+        },
+        item.qty,
+      );
+    });
+    setReordered(true);
+    setTimeout(() => setReordered(false), 1500);
   };
 
   // Only surface the location while it's still "in transit" — once
@@ -259,10 +285,17 @@ function OrderCard({ order }: { order: Order }) {
             </p>
           )}
         </div>
-        <div className="flex shrink-0 items-center gap-3 self-end sm:self-auto">
+        <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
           <span className="font-mono text-sm font-semibold text-moss-900">
             {formatPHP(Number(order.total))}
           </span>
+          <button
+            type="button"
+            onClick={buyAgain}
+            className="shrink-0 rounded-full border border-moss-200 px-3 py-1.5 font-mono text-[11px] font-medium text-moss-700 transition-colors hover:border-moss-400 focus-ring"
+          >
+            {reordered ? "Added!" : "Buy again"}
+          </button>
           <ChevronDown
             className={`h-4 w-4 text-moss-400 transition-transform ${
               open ? "rotate-180" : ""
@@ -358,6 +391,17 @@ function OrderCard({ order }: { order: Order }) {
               This can take up to 1 business hour.
             </p>
           )}
+
+          <div className="mt-4 flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={buyAgain}
+              className="font-mono text-xs"
+            >
+              {reordered ? "Added to cart!" : "Buy this order again"}
+            </Button>
+          </div>
         </div>
       )}
     </div>
