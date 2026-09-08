@@ -21,10 +21,8 @@ async function parseUpstream(res: Response) {
 }
 
 // GET /api/products/:id — public, no token needed
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const res = await fetch(`${API_URL}/products/${params.id}`, {
     headers: { Accept: "application/json" },
     cache: "no-store",
@@ -36,10 +34,8 @@ export async function GET(
 
 // POST /api/products/:id (FormData; must include `_method=PUT` so Laravel
 // treats it as an update — required since native PUT can't carry files)
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const token = getToken(request);
   if (!token) {
     return NextResponse.json(
@@ -67,10 +63,8 @@ export async function POST(
 }
 
 // DELETE /api/products/:id
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const token = getToken(request);
   if (!token) {
     return NextResponse.json(

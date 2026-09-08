@@ -1,9 +1,11 @@
+// FILE PATH: proxy.ts
+
 import { NextRequest, NextResponse } from "next/server";
 
 const isDev = process.env.NODE_ENV !== "production";
 
 function log(...args: unknown[]) {
-  if (isDev) console.log("[middleware]", ...args);
+  if (isDev) console.log("[proxy]", ...args);
 }
 
 function getApiOrigin() {
@@ -23,9 +25,14 @@ function buildCspHeader(nonce: string) {
     default-src 'self';
     script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""};
     style-src 'self' 'unsafe-inline';
-    img-src 'self' data: https:;
+    img-src 'self' data: https:${isDev ? " http:" : ""};
     font-src 'self';
     connect-src 'self' ${apiOrigin};
+    worker-src 'self';
+    manifest-src 'self';
+    base-uri 'self';
+    form-action 'self';
+    object-src 'none';
     frame-ancestors 'none';
   `;
   return csp.replace(/\s{2,}/g, " ").trim();
@@ -38,7 +45,7 @@ function withCsp(response: NextResponse, nonce: string, cspHeader: string) {
   return response;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const cspHeader = buildCspHeader(nonce);
 
@@ -117,6 +124,11 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   // Runs on everything except static assets/api, so CSP applies site-wide
-  // while the admin auth branch only triggers for /admin/:path*.
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  // while the admin auth branch only triggers for /admin/:path*. Also
+  // excludes the service worker file, chunked workbox workers, and the PWA
+  // manifest — a fresh per-request nonce/CSP on those isn't needed and can
+  // interfere with how the browser caches/registers them.
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|sw.js|worker.*\\.js|manifest\\.json).*)",
+  ],
 };

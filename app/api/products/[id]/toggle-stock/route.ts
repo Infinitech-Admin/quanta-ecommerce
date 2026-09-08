@@ -3,10 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // POST /api/products/:id/toggle-stock
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const token = request.cookies.get("auth_token")?.value;
   if (!token) {
     return NextResponse.json(

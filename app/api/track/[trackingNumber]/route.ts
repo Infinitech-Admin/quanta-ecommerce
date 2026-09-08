@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { trackingNumber: string } },
+  props: { params: Promise<{ trackingNumber: string }> }
 ) {
+  const params = await props.params;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   if (!apiUrl) {

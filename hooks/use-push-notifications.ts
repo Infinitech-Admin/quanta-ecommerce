@@ -23,6 +23,35 @@ export function usePushNotifications() {
     }
   }, []);
 
+  // Silently re-save whatever subscription the browser already has, every
+  // time the app loads. This is what keeps the backend row alive even if
+  // it gets deleted manually or lost some other way — since the enable
+  // banner only shows when permission is NOT already granted, this is the
+  // only thing that can recreate the row once permission was already given
+  // in an earlier session.
+  useEffect(() => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator))
+      return;
+    if (!("Notification" in window) || Notification.permission !== "granted")
+      return;
+
+    (async () => {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const existing = await registration.pushManager.getSubscription();
+        if (!existing) return; // browser truly has nothing to sync
+
+        await fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(existing.toJSON()),
+        });
+      } catch (err) {
+        console.error("Push resync failed:", err);
+      }
+    })();
+  }, []);
+
   const subscribe = useCallback(async () => {
     if (typeof window === "undefined" || !("Notification" in window)) {
       toast.error("This browser doesn't support notifications.");

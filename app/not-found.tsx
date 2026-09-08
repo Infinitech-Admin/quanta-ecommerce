@@ -1,6 +1,8 @@
 import Link from "next/link";
 import styles from "./not-found.module.css";
 
+import type { JSX } from "react";
+
 /**
  * 404 page for the Next.js App Router.
  * File location: app/not-found.tsx

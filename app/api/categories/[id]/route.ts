@@ -5,10 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // GET is public in Laravel — no auth needed, left as-is.
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const res = await fetch(`${API_URL}/categories/${params.id}`, {
     cache: "no-store",
   });
@@ -25,10 +23,8 @@ export async function GET(
 }
 
 // POST (update) -> requires auth:sanctum in Laravel
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const token = req.cookies.get("auth_token")?.value;
   const formData = await req.formData();
 
@@ -46,10 +42,8 @@ export async function POST(
 }
 
 // DELETE -> requires auth:sanctum in Laravel
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const token = req.cookies.get("auth_token")?.value;
 
   const res = await fetch(`${API_URL}/categories/${params.id}`, {

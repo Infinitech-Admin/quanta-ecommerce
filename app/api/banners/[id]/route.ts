@@ -4,10 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const token = req.cookies.get("auth_token")?.value;
   const formData = await req.formData();
 
@@ -24,10 +22,8 @@ export async function POST(
   return NextResponse.json(data, { status: res.status });
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const token = req.cookies.get("auth_token")?.value;
 
   const res = await fetch(`${API_URL}/banners/${params.id}`, {
