@@ -14,6 +14,11 @@ const nextConfig = {
         hostname: "infinitech-api17.site",
       },
       {
+  protocol: "https",
+  hostname: "infinitech-api18.site",
+  pathname: "/products/**",
+},
+      {
         protocol: "https",
         hostname: "**",
       },
