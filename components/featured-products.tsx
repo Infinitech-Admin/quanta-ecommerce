@@ -19,6 +19,7 @@ import type { Category, Product } from "@/types/product";
 import { buildPromoHref } from "@/lib/slug";
 
 const IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_URL ?? "";
+const PLACEHOLDER_IMAGE = "/products/placeholder.jpg";
 
 // How many promo cards to tease on the homepage strip.
 const MAX_HIGHLIGHTS = 8;
@@ -51,7 +52,7 @@ type Tab = "promos" | "bestsellers";
 type FetchStatus = "loading" | "ready" | "error";
 
 function resolveImageUrl(path: string | null | undefined): string {
-  if (!path) return "/products/placeholder.jpg";
+  if (!path || !path.trim()) return PLACEHOLDER_IMAGE;
   if (
     path.startsWith("http://") ||
     path.startsWith("https://") ||
@@ -60,6 +61,36 @@ function resolveImageUrl(path: string | null | undefined): string {
     return path;
   }
   return `${IMAGE_BASE_URL}${path}`;
+}
+
+// Shows the product image, and falls back to the default placeholder when
+// there's no image path OR when the image fails to load (404, broken URL).
+function ProductImage({
+  src,
+  alt,
+  className,
+}: {
+  src: string | null | undefined;
+  alt: string;
+  className?: string;
+}) {
+  const [errored, setErrored] = React.useState(false);
+
+  // Reset error state when the src changes
+  React.useEffect(() => {
+    setErrored(false);
+  }, [src]);
+
+  return (
+    <Image
+      src={errored ? PLACEHOLDER_IMAGE : resolveImageUrl(src)}
+      alt={alt}
+      fill
+      sizes="260px"
+      className={className}
+      onError={() => setErrored(true)}
+    />
+  );
 }
 
 function startOfToday(): Date {
@@ -106,11 +137,9 @@ function PromoCard({ product }: { product: PromoProduct }) {
       style={{ width, maxWidth: width, minWidth: width }}
     >
       <div className="relative m-2.5 aspect-square overflow-hidden rounded-2xl bg-moss-50">
-        <Image
-          src={resolveImageUrl(product.image)}
+        <ProductImage
+          src={product.image}
           alt={product.name}
-          fill
-          sizes="260px"
           className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
         />
         {discountPct !== null && (
@@ -178,11 +207,9 @@ function BestSellerCard({ product }: { product: Product }) {
   return (
     <div className="group flex w-[210px] shrink-0 snap-start flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-moss-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-green-300 sm:w-[240px]">
       <div className="relative m-2.5 aspect-square overflow-hidden rounded-2xl bg-moss-50">
-        <Image
-          src={`${IMAGE_BASE_URL}${product.image}`}
+        <ProductImage
+          src={product.image}
           alt={product.name}
-          fill
-          sizes="260px"
           className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
         />
         <span className="absolute left-2.5 top-2.5 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-semibold text-moss-700 shadow-sm backdrop-blur">
@@ -408,11 +435,11 @@ export function FeaturedProducts() {
         </div>
 
         {status === "loading" ? (
-          <CardsSkeleton width={isPromos ? CARD_WIDTH : 210} />
+          <CardsSkeleton width={CARD_WIDTH} />
         ) : (
           <div
             ref={scrollerRef}
-            className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 ..."
+            className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:gap-5 sm:px-0"
           >
             {isPromos
               ? highlights.map((product) => (
