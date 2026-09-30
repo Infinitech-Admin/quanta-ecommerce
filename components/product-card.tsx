@@ -13,9 +13,10 @@ import { formatPHP } from "@/lib/utils";
 import { buildProductHref } from "@/lib/slug";
 
 const IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_URL ?? "";
+const PLACEHOLDER_IMAGE = "/products/placeholder.jpg";
 
 function resolveImageUrl(path: string | null | undefined): string {
-  if (!path) return "/products/placeholder.jpg";
+  if (!path) return PLACEHOLDER_IMAGE;
   if (
     path.startsWith("http://") ||
     path.startsWith("https://") ||
@@ -41,8 +42,7 @@ export function ProductCard({ product }: { product: Product }) {
   const cartQty = line?.qty ?? 0;
 
   // Locally staged quantity — the stepper only edits THIS. Nothing is
-  // written to the cart until "Add to Cart" is pressed, which was the
-  // bug before (+/- was calling addItem/setQty directly).
+  // written to the cart until "Add to Cart" is pressed.
   const [pendingQty, setPendingQty] = useState(cartQty > 0 ? cartQty : 1);
 
   // Keep the staged qty in sync if the cart line changes elsewhere
@@ -50,6 +50,15 @@ export function ProductCard({ product }: { product: Product }) {
   useEffect(() => {
     setPendingQty(cartQty > 0 ? cartQty : 1);
   }, [cartQty]);
+
+  // Image source with fallback. Starts with the resolved URL and swaps
+  // to the placeholder if the image fails to load.
+  const [imgSrc, setImgSrc] = useState(resolveImageUrl(product.image));
+
+  // Reset if the product's image changes.
+  useEffect(() => {
+    setImgSrc(resolveImageUrl(product.image));
+  }, [product.image]);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -68,13 +77,16 @@ export function ProductCard({ product }: { product: Product }) {
         className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-gradient-to-br ${product.color}`}
       >
         <Image
-          src={resolveImageUrl(product.image)}
+          src={imgSrc}
           alt={product.name}
           fill
           className={`object-cover transition-all ${
             soldOut ? "grayscale" : ""
           }`}
           sizes="(max-width: 768px) 50vw, 25vw"
+          onError={() => {
+            if (imgSrc !== PLACEHOLDER_IMAGE) setImgSrc(PLACEHOLDER_IMAGE);
+          }}
         />
 
         {product.tag && !soldOut && (
@@ -136,8 +148,7 @@ export function ProductCard({ product }: { product: Product }) {
           {product.brand}
         </span>
 
-        {/* Fixed-height slot: reserves room for 2 lines so a 1-line
-            title doesn't sit taller/shorter than a 2-line title. */}
+        {/* Fixed-height slot: reserves room for 2 lines. */}
         <h3 className="line-clamp-2 min-h-[2.25rem] font-display text-sm font-medium leading-snug text-moss-900">
           {product.name}
         </h3>
@@ -216,11 +227,7 @@ export function ProductCard({ product }: { product: Product }) {
     </>
   );
 
-  // Sold-out products aren't clickable at all — render as a plain div
-  // instead of a Link so there's no navigation, no href, no cursor
-  // pointer, and no way to tab into it as a link.
-  // `h-full` makes every card fill its grid cell so all cards in a
-  // row match the tallest one, regardless of title/blurb length.
+  // Sold-out products aren't clickable at all — plain div, not a Link.
   if (soldOut) {
     return (
       <div
@@ -242,10 +249,8 @@ export function ProductCard({ product }: { product: Product }) {
   );
 }
 
-// Loading placeholder that mirrors ProductCard's real layout (image block,
-// price pill, brand line, two-line title slot, one-line blurb slot, and
-// the stepper + Add to Cart row) so the grid doesn't shift once real
-// cards load in.
+// Loading placeholder that mirrors ProductCard's real layout so the grid
+// doesn't shift once real cards load in.
 export function ProductCardSkeleton() {
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-moss-100 bg-card shadow-sm">
