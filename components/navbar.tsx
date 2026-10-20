@@ -208,7 +208,7 @@ export function Navbar() {
       <div className="border-b border-moss-100 bg-background/95 backdrop-blur">
         {/* Row height + gap now scale up from mobile instead of being
             fixed at the desktop size — this was the main overflow source. */}
-        <div className="container flex h-16 items-center gap-2 sm:h-20 sm:gap-4">
+        <div className="container flex h-20 items-center gap-2 sm:h-28 sm:gap-4">
           <button
             className="shrink-0 rounded-full p-2 hover:bg-moss-50 lg:hidden"
             onClick={() => setMobileOpen((v) => !v)}
@@ -222,15 +222,15 @@ export function Navbar() {
           </button>
 
           <Link href="/" className="group flex shrink-0 items-center">
-            {/* Logo scales up across breakpoints instead of being
-                near-full-size on phones. */}
             <Image
-              src="/logo.png"
+              src="/quanta-logo-square.png"
               alt="Quanta Paper Corporation"
-              width={220}
-              height={64}
+              width={512}
+              height={512}
+              sizes="(min-width: 640px) 96px, 64px"
               priority
-              className="h-8 w-auto transition-transform duration-300 ease-out group-hover:scale-105 sm:h-12 lg:h-14"
+              quality={100}
+              className="h-16 w-16 transition-transform duration-300 ease-out group-hover:scale-105 sm:h-24 sm:w-24"
             />
           </Link>
 

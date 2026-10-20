@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { ProductsBackground } from "@/components/products-background";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPHP } from "@/lib/utils";
@@ -139,18 +140,13 @@ export default function ProductDetailPage() {
   return (
     <>
       {/* Background layer */}
-      <div className="fixed inset-0 -z-10">
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/products-bg2.png')" }}
-        />
-      </div>
+      <ProductsBackground />
 
       <Navbar />
       <main className="container flex-1 py-8 sm:py-12">
         <button
           onClick={() => router.back()}
-          className="mb-6 inline-flex items-center gap-1 text-sm font-medium text-moss-600 hover:text-moss-900"
+          className="mb-6 inline-flex items-center gap-1 text-sm font-semibold text-moss-800 hover:text-moss-950"
         >
           <ChevronLeft className="h-4 w-4" />
           Back
@@ -201,7 +197,7 @@ export default function ProductDetailPage() {
 
             {/* Details */}
             <div className="flex flex-col">
-              <p className="text-xs font-medium uppercase tracking-wide text-moss-500">
+              <p className="text-xs font-semibold uppercase tracking-wide text-moss-700">
                 {product.brand}
               </p>
               <h1 className="mt-1 font-display text-2xl font-medium text-moss-900 sm:text-3xl">
@@ -223,7 +219,7 @@ export default function ProductDetailPage() {
                   {formatPHP(product.price)}
                 </span>
                 {product.originalPrice && (
-                  <span className="font-mono text-base text-muted-foreground line-through">
+                  <span className="font-mono text-base text-moss-700 line-through">
                     {formatPHP(product.originalPrice)}
                   </span>
                 )}
@@ -236,10 +232,10 @@ export default function ProductDetailPage() {
               )}
 
               {product.blurb && (
-                <div className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                <div className="mt-4 text-sm leading-relaxed text-moss-800 sm:text-base">
                   {product.blurb.includes(",") ? (
                     <>
-                      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-moss-500">
+                      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-moss-700">
                         Specifications
                       </p>
                       <ul className="list-disc space-y-1 pl-5">
@@ -260,12 +256,12 @@ export default function ProductDetailPage() {
 
               {/* Quantity + add to cart */}
               <div className="mt-6 flex items-center gap-3">
-                <div className="flex h-11 shrink-0 items-center rounded-full border border-moss-200">
+                <div className="flex h-11 shrink-0 items-center rounded-full border border-moss-300 bg-white/70 backdrop-blur-sm">
                   <button
                     type="button"
                     disabled={!canAddToCart || quantity <= 1}
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="flex h-10 w-9 items-center justify-center text-moss-600 disabled:opacity-40 sm:w-10"
+                    className="flex h-10 w-9 items-center justify-center text-moss-800 disabled:opacity-40 sm:w-10"
                     aria-label="Decrease quantity"
                   >
                     <Minus className="h-4 w-4" />
@@ -279,7 +275,7 @@ export default function ProductDetailPage() {
                     onClick={() =>
                       setQuantity((q) => Math.min(maxQuantity, q + 1))
                     }
-                    className="flex h-10 w-9 items-center justify-center text-moss-600 disabled:opacity-40 sm:w-10"
+                    className="flex h-10 w-9 items-center justify-center text-moss-800 disabled:opacity-40 sm:w-10"
                     aria-label="Increase quantity"
                   >
                     <Plus className="h-4 w-4" />
@@ -309,13 +305,13 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Trust badges */}
-              <div className="mt-8 flex flex-col gap-3 border-t border-moss-100 pt-6 text-sm text-moss-600 sm:flex-row sm:gap-6">
+              <div className="mt-8 flex flex-col gap-3 border-t border-moss-900/20 pt-6 text-sm font-medium text-moss-800 sm:flex-row sm:gap-6">
                 <div className="flex items-center gap-2">
-                  <Truck className="h-4 w-4 text-moss-500" />
+                  <Truck className="h-4 w-4 text-moss-700" />
                   Fast, reliable delivery
                 </div>
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 text-moss-500" />
+                  <ShieldCheck className="h-4 w-4 text-moss-700" />
                   100% genuine products
                 </div>
               </div>

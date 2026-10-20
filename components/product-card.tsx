@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { Star, ShoppingBag } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ShoppingBag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,11 +54,26 @@ export function ProductCard({ product }: { product: Product }) {
   // Image source with fallback. Starts with the resolved URL and swaps
   // to the placeholder if the image fails to load.
   const [imgSrc, setImgSrc] = useState(resolveImageUrl(product.image));
+  const imgRef = useRef<HTMLImageElement>(null);
 
   // Reset if the product's image changes.
   useEffect(() => {
     setImgSrc(resolveImageUrl(product.image));
   }, [product.image]);
+
+  // Catch images that already failed before React hydrated
+  // (onError never fires in that case).
+  useEffect(() => {
+    const img = imgRef.current;
+    if (
+      img &&
+      img.complete &&
+      img.naturalWidth === 0 &&
+      imgSrc !== PLACEHOLDER_IMAGE
+    ) {
+      setImgSrc(PLACEHOLDER_IMAGE);
+    }
+  }, [imgSrc]);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -77,11 +92,12 @@ export function ProductCard({ product }: { product: Product }) {
         className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-gradient-to-br ${product.color}`}
       >
         <Image
+          ref={imgRef}
           src={imgSrc}
           alt={product.name}
           fill
           className={`object-cover transition-all ${
-            soldOut ? "grayscale" : ""
+            soldOut ? "opacity-60 grayscale" : ""
           }`}
           sizes="(max-width: 768px) 50vw, 25vw"
           onError={() => {
@@ -100,29 +116,22 @@ export function ProductCard({ product }: { product: Product }) {
           </Badge>
         )}
 
+        {/* Round "Sold Out" badge centered over a faded image */}
         {soldOut && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-moss-950/35">
-            <span className="-rotate-[12deg] rounded-sm border-2 border-white/90 bg-moss-950/70 px-4 py-1 text-sm font-bold uppercase tracking-widest text-white shadow-sm">
-              Sold out
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-moss-950/20 backdrop-blur-[2px]">
+            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-b from-moss-700/90 to-moss-950/90 p-2 text-center text-xs font-bold uppercase leading-tight tracking-wider text-white shadow-lg ring-2 ring-white/70 sm:h-24 sm:w-24 sm:text-sm">
+              Sold
+              <br />
+              Out
             </span>
           </div>
         )}
       </div>
 
-      {/* Diagonal strike-through across the whole card */}
-      {soldOut && (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-10"
-          style={{
-            background:
-              "linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(28,38,28,0.55) calc(50% - 1px), rgba(28,38,28,0.55) calc(50% + 1px), transparent calc(50% + 1px))",
-          }}
-        />
-      )}
-
+      {/* Tighter padding on phones (p-3), roomier from sm up (p-5).
+          min-w-0 lets children shrink instead of overflowing the card. */}
       <div
-        className={`flex flex-1 flex-col gap-1 p-5 ${
+        className={`flex min-w-0 flex-1 flex-col gap-1 p-3 sm:p-5 ${
           soldOut ? "opacity-60" : ""
         }`}
       >
@@ -158,7 +167,9 @@ export function ProductCard({ product }: { product: Product }) {
           {product.blurb}
         </p>
 
-        {/* Bottom action row — stepper + Add to Cart share one row */}
+        {/* Bottom action row.
+            Phones: stepper stacked above a full-width button.
+            sm and up: stepper + button share one row. */}
         <div className="mt-auto pt-2">
           {soldOut ? (
             <Button
@@ -172,17 +183,17 @@ export function ProductCard({ product }: { product: Product }) {
             </Button>
           ) : (
             <div
-              className="flex items-center gap-1.5"
+              className="flex flex-col gap-1.5 sm:flex-row sm:items-center"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
               }}
             >
-              <div className="flex shrink-0 items-center rounded-full border border-moss-200 bg-white">
+              <div className="flex w-full shrink-0 items-center justify-between rounded-full border border-moss-200 bg-white sm:w-auto sm:justify-start">
                 <button
                   type="button"
                   aria-label={`Decrease quantity of ${product.name}`}
-                  className="flex h-9 w-7 items-center justify-center text-moss-700 hover:text-green-700 disabled:cursor-not-allowed disabled:text-moss-300"
+                  className="flex h-9 w-9 items-center justify-center text-moss-700 hover:text-green-700 disabled:cursor-not-allowed disabled:text-moss-300 sm:w-7"
                   disabled={pendingQty <= 1}
                   onClick={(e) => {
                     e.preventDefault();
@@ -198,7 +209,7 @@ export function ProductCard({ product }: { product: Product }) {
                 <button
                   type="button"
                   aria-label={`Increase quantity of ${product.name}`}
-                  className="flex h-9 w-7 items-center justify-center text-moss-700 hover:text-green-700"
+                  className="flex h-9 w-9 items-center justify-center text-moss-700 hover:text-green-700 sm:w-7"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -211,7 +222,7 @@ export function ProductCard({ product }: { product: Product }) {
 
               <Button
                 type="button"
-                className="h-9 flex-1 rounded-full bg-green-600 px-3 text-white hover:bg-green-700"
+                className="h-9 w-full whitespace-nowrap rounded-full bg-green-600 px-3 text-white hover:bg-green-700 sm:w-auto sm:flex-1"
                 onClick={handleAddToCart}
               >
                 {cartQty > 0 && cartQty === pendingQty
@@ -256,16 +267,16 @@ export function ProductCardSkeleton() {
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-moss-100 bg-card shadow-sm">
       <Skeleton className="aspect-[4/3] w-full rounded-none" />
 
-      <div className="flex flex-1 flex-col gap-1 p-3">
+      <div className="flex flex-1 flex-col gap-1 p-3 sm:p-5">
         <Skeleton className="h-6 w-16 rounded-md" />
         <Skeleton className="mt-1 h-3 w-16" />
         <Skeleton className="mt-1 h-4 w-full" />
         <Skeleton className="h-4 w-2/3" />
         <Skeleton className="mt-1 h-3 w-full" />
 
-        <div className="mt-auto flex items-center gap-1.5 pt-2">
-          <Skeleton className="h-9 w-20 rounded-md" />
-          <Skeleton className="h-9 flex-1 rounded-md" />
+        <div className="mt-auto flex flex-col gap-1.5 pt-2 sm:flex-row sm:items-center">
+          <Skeleton className="h-9 w-full rounded-full sm:w-20" />
+          <Skeleton className="h-9 w-full rounded-full sm:flex-1" />
         </div>
       </div>
     </div>

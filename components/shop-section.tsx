@@ -22,6 +22,31 @@ import { CATEGORIES, type Product } from "@/types/product";
 
 const ALL = "All items" as const;
 
+const norm = (s: string) => s.trim().toLowerCase();
+
+// Tabs to hide from the shop page.
+const HIDDEN_CATEGORIES = ["oral care", "health and beauty", "health & beauty"];
+
+// Display-only renames (the underlying category value is unchanged).
+const CATEGORY_LABELS: Record<string, string> = {
+  "paper and tissue": "Tissue",
+};
+
+const VISIBLE_CATEGORIES = CATEGORIES.filter(
+  (c) => !HIDDEN_CATEGORIES.includes(norm(c)),
+);
+
+// Products from these categories are moved into Personal Care.
+const MOVED_TO_PERSONAL_CARE = ["health and beauty", "health & beauty"];
+const PERSONAL_CARE =
+  CATEGORIES.find((c) => norm(c) === "personal care") ?? "Personal Care";
+
+function remapCategory(p: Product): Product {
+  return MOVED_TO_PERSONAL_CARE.includes(norm(p.category))
+    ? { ...p, category: PERSONAL_CARE }
+    : p;
+}
+
 export function ShopSection() {
   const searchParams = useSearchParams();
   const searchQuery = (searchParams.get("search") ?? "").trim();
@@ -43,7 +68,11 @@ export function ShopSection() {
         const data = await res.json();
 
         if (!cancelled) {
-          setProducts(Array.isArray(data.products) ? data.products : []);
+          setProducts(
+            Array.isArray(data.products)
+              ? (data.products as Product[]).map(remapCategory)
+              : [],
+          );
           setStatus("ready");
         }
       } catch {
@@ -148,13 +177,13 @@ export function ShopSection() {
             >
               {ALL}
             </TabsTrigger>
-            {CATEGORIES.map((cat) => (
+            {VISIBLE_CATEGORIES.map((cat) => (
               <TabsTrigger
                 key={cat}
                 value={cat}
                 className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
               >
-                {cat}
+                {CATEGORY_LABELS[norm(cat)] ?? cat}
               </TabsTrigger>
             ))}
           </TabsList>

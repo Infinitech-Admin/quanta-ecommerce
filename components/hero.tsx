@@ -3,12 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ArrowRight,
-  ShieldCheck,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -209,19 +204,24 @@ export function Hero() {
             instead of wrapping into 4. */}
         <div className="hidden w-full flex-shrink-0 lg:block lg:w-[24%]">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-forest shadow-sm">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Trusted &amp; Fast Delivery
+            <Truck className="h-3.5 w-3.5" />
+            Fast Delivery
           </span>
 
-          <h1 className="mt-4 font-display text-[1.85rem] font-semibold leading-[1.2] tracking-tight text-moss-900 xl:text-3xl">
-            Everyday Essentials,
-            <br />
-            Delivered to Your Door
+          <h1 className="mt-4">
+            <Image
+              src="/q-store-logo-preview.png"
+              alt="Q-Store"
+              width={392}
+              height={108}
+              priority
+              className="h-auto w-full max-w-[320px]"
+            />
           </h1>
 
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-moss-800/80">
-            100% authentic products from your favorite brands — eco-friendly,
-            reliable, and always fresh.
+            Shop your everyday essentials from your trusted brands. Find
+            products that are eco-friendly, affordable, and reliable.
           </p>
 
           <Button asChild variant="gradient" size="lg" className="mt-5 gap-2">
