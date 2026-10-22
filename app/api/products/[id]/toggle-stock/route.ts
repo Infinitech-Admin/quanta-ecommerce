@@ -1,12 +1,17 @@
+// 📁 app/api/products/[id]/toggle-stock/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // POST /api/products/:id/toggle-stock
+// Laravel registers this under the `admin` prefix, so the upstream URL is
+// /admin/products/:id/toggle-stock.
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
+
   const token = request.cookies.get("auth_token")?.value;
   if (!token) {
     return NextResponse.json(
@@ -15,7 +20,7 @@ export async function POST(
     );
   }
 
-  const res = await fetch(`${API_URL}/products/${params.id}/toggle-stock`, {
+  const res = await fetch(`${API_URL}/admin/products/${id}/toggle-stock`, {
     method: "POST",
     headers: {
       Accept: "application/json",

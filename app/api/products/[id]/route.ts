@@ -37,11 +37,17 @@ export async function GET(
 }
 
 // POST /api/products/:id (FormData; must include `_method=PUT` so Laravel
-// treats it as an update — required since native PUT can't carry files)
+// treats it as an update — required since native PUT can't carry files).
+//
+// NOTE: the write routes live under the `admin` prefix in Laravel
+// (routes/api.php), so the upstream URL is /admin/products/:id — the
+// public /products/:id route only supports GET/HEAD.
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
+
   const token = getToken(request);
   if (!token) {
     return NextResponse.json(
@@ -55,7 +61,7 @@ export async function POST(
     formData.append("_method", "PUT");
   }
 
-  const res = await fetch(`${API_URL}/products/${params.id}`, {
+  const res = await fetch(`${API_URL}/admin/products/${id}`, {
     method: "POST",
     body: formData,
     headers: {
@@ -71,8 +77,10 @@ export async function POST(
 // DELETE /api/products/:id
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
+
   const token = getToken(request);
   if (!token) {
     return NextResponse.json(
@@ -81,7 +89,7 @@ export async function DELETE(
     );
   }
 
-  const res = await fetch(`${API_URL}/products/${params.id}`, {
+  const res = await fetch(`${API_URL}/admin/products/${id}`, {
     method: "DELETE",
     headers: {
       Accept: "application/json",
