@@ -23,9 +23,11 @@ async function parseUpstream(res: Response) {
 // GET /api/products/:id — public, no token needed
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const res = await fetch(`${API_URL}/products/${params.id}`, {
+  const { id } = await params;
+
+  const res = await fetch(`${API_URL}/products/${id}`, {
     headers: { Accept: "application/json" },
     cache: "no-store",
   });
