@@ -22,6 +22,40 @@ import { CATEGORIES, type Product } from "@/types/product";
 
 const ALL = "All items" as const;
 
+// Normalise so "Paper And Tissue", "paper and tissue" and "Health & Beauty"
+// all compare reliably, whatever casing the backend/types use.
+const norm = (s: string) =>
+  s
+    .trim()
+    .toLowerCase()
+    .replace(/\s*&\s*/g, " and ");
+
+// Category tabs that should no longer be shown.
+const HIDDEN_CATEGORIES = new Set(["oral care", "health and beauty"]);
+
+// Display labels. The tab's *value* stays the real category name (so the
+// product filter keeps matching what the API returns); only the text changes.
+const CATEGORY_LABELS: Record<string, string> = {
+  "paper and tissue": "Tissue",
+};
+
+const VISIBLE_CATEGORIES = CATEGORIES.filter(
+  (cat) => !HIDDEN_CATEGORIES.has(norm(cat)),
+);
+
+const categoryLabel = (cat: string) => CATEGORY_LABELS[norm(cat)] ?? cat;
+
+// Products still tagged "Health and Beauty" by the API are shown under
+// "Personal Care" instead. Uses the exact Personal Care name from CATEGORIES
+// so the tab filter matches.
+const PERSONAL_CARE: string =
+  CATEGORIES.find((cat) => norm(cat) === "personal care") ?? "Personal Care";
+
+const moveToPersonalCare = (p: Product): Product =>
+  norm(p.category) === "health and beauty"
+    ? { ...p, category: PERSONAL_CARE as Product["category"] }
+    : p;
+
 export function ShopSection() {
   const searchParams = useSearchParams();
   const searchQuery = (searchParams.get("search") ?? "").trim();
@@ -43,7 +77,11 @@ export function ShopSection() {
         const data = await res.json();
 
         if (!cancelled) {
-          setProducts(Array.isArray(data.products) ? data.products : []);
+          setProducts(
+            Array.isArray(data.products)
+              ? (data.products as Product[]).map(moveToPersonalCare)
+              : [],
+          );
           setStatus("ready");
         }
       } catch {
@@ -148,13 +186,13 @@ export function ShopSection() {
             >
               {ALL}
             </TabsTrigger>
-            {CATEGORIES.map((cat) => (
+            {VISIBLE_CATEGORIES.map((cat) => (
               <TabsTrigger
                 key={cat}
                 value={cat}
                 className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
               >
-                {cat}
+                {categoryLabel(cat)}
               </TabsTrigger>
             ))}
           </TabsList>
