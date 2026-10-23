@@ -216,7 +216,7 @@ export function Hero() {
           <h1 className="mt-4">
             <span className="sr-only">Q-Store</span>
             <Image
-              src="/q-store-logo.png"
+              src="/q-store-logo-no-bg.png"
               alt="Q-Store"
               width={480}
               height={160}

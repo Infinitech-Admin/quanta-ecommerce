@@ -44,7 +44,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   { label: "Products", href: "/admin/products", icon: Package },
   { label: "Hero Banner", href: "/admin/hero-banner", icon: Images },
-  { label: "Shop Categories", href: "/admin/categories", icon: Tag },
+  { label: "Shop Categories", href: "/admin/categories-page", icon: Tag },
   {
     label: "Orders",
     href: "/admin/orders",

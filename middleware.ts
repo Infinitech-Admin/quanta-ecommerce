@@ -19,11 +19,15 @@ function getApiOrigin() {
 function buildCspHeader(nonce: string) {
   const apiOrigin = getApiOrigin();
 
+  // img-src notes:
+  //  - blob:        admin upload previews (URL.createObjectURL)
+  //  - ${apiOrigin} images served straight from the Laravel API; needed in
+  //                 dev because "https:" does not cover http://localhost:8000
   const csp = `
     default-src 'self';
     script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""};
     style-src 'self' 'unsafe-inline';
-    img-src 'self' data: https:;
+    img-src 'self' data: blob: https: ${apiOrigin};
     font-src 'self';
     connect-src 'self' ${apiOrigin};
     frame-ancestors 'none';

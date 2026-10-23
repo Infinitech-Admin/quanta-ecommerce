@@ -23,7 +23,7 @@ import {
 import { CATEGORIES, CATEGORY_LABELS, type Product } from "@/types/product";
 import { buildProductHref } from "@/lib/slug";
 
-const ALL = "All items" as const;
+const ALL = "All Items" as const;
 
 export default function ShopPage() {
   const router = useRouter();
@@ -160,7 +160,7 @@ export default function ShopPage() {
       <div className="fixed inset-0 -z-10">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-100"
-          style={{ backgroundImage: "url('/shop.png')" }}
+          style={{ backgroundImage: "url('/shop-design-with-cart.png')" }}
         />
         {/* Readability overlay — lower the /NN value to let more image show through */}
         <div className="absolute inset-0 bg-background/30" />
@@ -177,8 +177,8 @@ export default function ShopPage() {
               Shop All Products
             </h1>
             <p className="mt-1 max-w-lg text-sm text-muted-foreground">
-              Browse our full catalog of paper, personal care, and oral care
-              essentials.
+              Browse our full catalog of paper, personal care, oral care, and
+              baby care essentials.
             </p>
           </div>
           <Button

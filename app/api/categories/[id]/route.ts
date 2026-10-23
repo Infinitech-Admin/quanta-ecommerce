@@ -4,12 +4,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+// In Next 15, `params` is a Promise and must be awaited.
+type RouteContext = { params: Promise<{ id: string }> };
+
 // GET is public in Laravel — no auth needed, left as-is.
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { id: string } },
-) {
-  const res = await fetch(`${API_URL}/categories/${params.id}`, {
+export async function GET(_req: NextRequest, { params }: RouteContext) {
+  const { id } = await params;
+
+  const res = await fetch(`${API_URL}/categories/${id}`, {
     cache: "no-store",
   });
 
@@ -25,14 +27,12 @@ export async function GET(
 }
 
 // POST (update) -> requires auth:sanctum in Laravel
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function POST(req: NextRequest, { params }: RouteContext) {
+  const { id } = await params;
   const token = req.cookies.get("auth_token")?.value;
   const formData = await req.formData();
 
-  const res = await fetch(`${API_URL}/categories/${params.id}`, {
+  const res = await fetch(`${API_URL}/admin/categories/${id}`, {
     method: "POST",
     headers: {
       Accept: "application/json",
@@ -46,13 +46,11 @@ export async function POST(
 }
 
 // DELETE -> requires auth:sanctum in Laravel
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(req: NextRequest, { params }: RouteContext) {
+  const { id } = await params;
   const token = req.cookies.get("auth_token")?.value;
 
-  const res = await fetch(`${API_URL}/categories/${params.id}`, {
+  const res = await fetch(`${API_URL}/admin/categories/${id}`, {
     method: "DELETE",
     headers: {
       Accept: "application/json",
