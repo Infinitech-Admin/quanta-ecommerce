@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
 
-    const res = await fetch(`${API_URL}/products`, {
+    const res = await fetch(`${API_URL}/admin/products`, {
       method: "POST",
       headers: {
         Accept: "application/json",
