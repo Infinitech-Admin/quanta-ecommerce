@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { trackingNumber: string } },
+  { params }: { params: Promise<{ trackingNumber: string }> },
 ) {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -13,7 +13,7 @@ export async function GET(
     );
   }
 
-  const { trackingNumber } = params;
+  const { trackingNumber } = await params;
 
   if (!trackingNumber?.trim()) {
     return NextResponse.json(
