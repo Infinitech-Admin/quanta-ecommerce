@@ -176,6 +176,9 @@ export default function AdminOrdersPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Proof of payment full-size preview modal
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   // Row-level quick status updates (separate from the dialog's save state)
   const [updatingRowId, setUpdatingRowId] = useState<number | null>(null);
 
@@ -711,25 +714,29 @@ export default function AdminOrdersPage() {
                   </p>
                 </div>
 
-                {/* Proof of payment — only present for non-COD orders */}
+                {/* Proof of payment — only present for non-COD orders.
+                    Opens a full-size preview modal instead of a new tab. */}
                 {selectedOrder.proof_path && (
                   <div className="grid gap-1.5">
                     <Label>Proof of payment</Label>
-                    <a
-                      href={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${selectedOrder.proof_path}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block overflow-hidden rounded-xl border border-moss-200"
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPreviewImage(
+                          `${process.env.NEXT_PUBLIC_IMAGE_URL}/${selectedOrder.proof_path}`,
+                        )
+                      }
+                      className="block w-full cursor-zoom-in overflow-hidden rounded-xl border border-moss-200"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${selectedOrder.proof_path}`}
                         alt="Proof of payment"
-                        className="max-h-64 w-full object-contain bg-moss-50"
+                        className="max-h-64 w-full bg-moss-50 object-contain"
                       />
-                    </a>
+                    </button>
                     <p className="text-[11px] text-muted-foreground">
-                      Click to open full size in a new tab.
+                      Click the image to view it larger.
                     </p>
                   </div>
                 )}
@@ -825,6 +832,27 @@ export default function AdminOrdersPage() {
                 </Button>
               </DialogFooter>
             </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Proof of payment — full image preview */}
+      <Dialog
+        open={!!previewImage}
+        onOpenChange={(open) => !open && setPreviewImage(null)}
+      >
+        <DialogContent className="max-w-3xl p-2">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Proof of payment</DialogTitle>
+            <DialogDescription>Full size preview</DialogDescription>
+          </DialogHeader>
+          {previewImage && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={previewImage}
+              alt="Proof of payment"
+              className="max-h-[80vh] w-full rounded-lg bg-moss-50 object-contain"
+            />
           )}
         </DialogContent>
       </Dialog>

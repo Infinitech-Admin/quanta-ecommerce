@@ -70,7 +70,7 @@ type AdminProduct = {
   name: string;
   brand: string;
   category: Category;
-  price: number;
+  price: number | null; // optional — may be empty
   originalPrice?: number | null;
   rating: number;
   reviews: number;
@@ -274,7 +274,7 @@ export default function AdminProductsPage() {
       name: product.name,
       brand: product.brand,
       category: product.category,
-      price: String(product.price),
+      price: product.price != null ? String(product.price) : "",
       originalPrice: product.originalPrice ? String(product.originalPrice) : "",
       stock: String(product.stock ?? (product.inStock ? 10 : 0)),
       tag: product.tag ?? "",
@@ -533,7 +533,9 @@ export default function AdminProductsPage() {
                       </TableCell>
                       <TableCell>
                         <span className="font-medium text-moss-900">
-                          {formatPHP(product.price)}
+                          {product.price != null
+                            ? formatPHP(product.price)
+                            : "—"}
                         </span>
                         {product.originalPrice && (
                           <span className="ml-1.5 text-xs text-muted-foreground line-through">
@@ -686,7 +688,7 @@ export default function AdminProductsPage() {
 
                     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
                       <span className="text-sm font-medium text-moss-900">
-                        {formatPHP(product.price)}
+                        {product.price != null ? formatPHP(product.price) : "—"}
                       </span>
                       {product.originalPrice && (
                         <span className="text-xs text-muted-foreground line-through">
@@ -902,13 +904,15 @@ export default function AdminProductsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-1.5">
-                  <Label htmlFor="price">Price (PHP)</Label>
+                  <Label htmlFor="price">
+                    Price (PHP){" "}
+                    <span className="text-muted-foreground">(optional)</span>
+                  </Label>
                   <Input
                     id="price"
                     type="number"
                     min="0"
                     step="0.01"
-                    required
                     value={form.price}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, price: e.target.value }))
@@ -1099,9 +1103,11 @@ export default function AdminProductsPage() {
               <div className="space-y-2 text-sm">
                 <p className="text-muted-foreground">{viewProduct.blurb}</p>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <Badge className="border-transparent bg-yellow-300 text-moss-950">
-                    {formatPHP(viewProduct.price)}
-                  </Badge>
+                  {viewProduct.price != null && (
+                    <Badge className="border-transparent bg-yellow-300 text-moss-950">
+                      {formatPHP(viewProduct.price)}
+                    </Badge>
+                  )}
                   {viewProduct.originalPrice && (
                     <span className="text-xs text-muted-foreground line-through">
                       {formatPHP(viewProduct.originalPrice)}

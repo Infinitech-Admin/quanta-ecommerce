@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { ShoppingBag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,9 +28,11 @@ function resolveImageUrl(path: string | null | undefined): string {
 
 const TAG_STYLES: Record<string, string> = {
   "Best Seller": "border-transparent bg-green-600 text-white",
-  Eco: "border-transparent bg-lime-500 text-moss-950",
   New: "border-transparent bg-yellow-400 text-moss-950",
 };
+
+// Tags that should never be shown as a badge.
+const HIDDEN_TAGS = ["eco"];
 
 export function ProductCard({ product }: { product: Product }) {
   const { lines, addItem, setQty } = useCart();
@@ -89,170 +90,126 @@ export function ProductCard({ product }: { product: Product }) {
   const cardInner = (
     <>
       <div
-        className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-gradient-to-br ${product.color}`}
+        className={`relative flex aspect-square items-center justify-center overflow-hidden bg-white`}
       >
         <Image
           ref={imgRef}
           src={imgSrc}
           alt={product.name}
           fill
-          className={`object-cover transition-all ${
-            soldOut ? "grayscale" : ""
-          }`}
+          className="object-contain p-3 transition-all"
           sizes="(max-width: 768px) 50vw, 25vw"
           onError={() => {
             if (imgSrc !== PLACEHOLDER_IMAGE) setImgSrc(PLACEHOLDER_IMAGE);
           }}
         />
 
-        {product.tag && !soldOut && (
-          <Badge
-            className={`absolute left-2 top-2 z-10 sm:left-3 sm:top-3 ${
-              TAG_STYLES[product.tag] ??
-              "border-transparent bg-green-600 text-white"
-            }`}
-          >
-            {product.tag}
-          </Badge>
-        )}
-
-        {soldOut && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-stone-500/35">
-            <span className="font-display text-xl font-semibold text-white drop-shadow-md sm:text-2xl">
-              Sold Out
-            </span>
-          </div>
-        )}
-      </div>
-
-      {soldOut ? (
-        /* Sold out: just the name and price, centered under the image */
-        <div className="flex min-w-0 flex-1 flex-col items-center gap-1 p-3 text-center sm:p-4">
-          <h3 className="line-clamp-2 font-display text-sm font-medium leading-snug text-moss-700">
-            {product.name}
-          </h3>
-          <span className="font-mono text-xs text-moss-500">
-            {formatPHP(product.price)}
-          </span>
-        </div>
-      ) : (
-        /* Tighter padding on phones so the 2-column grid has room to breathe */
-        <div className="flex min-w-0 flex-1 flex-col gap-1 p-3 sm:p-5">
-          {/* Price sits right under the image */}
-          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-            <span
-              className={`rounded-md px-1.5 py-0.5 font-display text-sm font-semibold ${
-                soldOut
-                  ? "bg-moss-200 text-moss-500"
-                  : "bg-yellow-300 text-moss-950"
+        {product.tag &&
+          !soldOut &&
+          !HIDDEN_TAGS.includes(product.tag.trim().toLowerCase()) && (
+            <Badge
+              className={`absolute left-2 top-2 z-10 sm:left-3 sm:top-3 ${
+                TAG_STYLES[product.tag] ??
+                "border-transparent bg-green-600 text-white"
               }`}
             >
+              {product.tag}
+            </Badge>
+          )}
+      </div>
+
+      {/* Tighter padding on phones so the 2-column grid has room to breathe */}
+      <div className="flex min-w-0 flex-1 flex-col gap-1 p-3 sm:p-5">
+        {/* Price sits right under the image */}
+        <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+          {product.price != null && (
+            <span className="rounded-md bg-yellow-300 px-1.5 py-0.5 font-display text-sm font-semibold text-moss-950">
               {formatPHP(product.price)}
             </span>
-            {product.originalPrice && (
-              <span className="text-xs text-muted-foreground line-through">
-                {formatPHP(product.originalPrice)}
-              </span>
-            )}
-          </div>
+          )}
+          {product.originalPrice && (
+            <span className="text-xs text-muted-foreground line-through">
+              {formatPHP(product.originalPrice)}
+            </span>
+          )}
+        </div>
 
-          <span className="mt-1 truncate text-[11px] font-semibold uppercase tracking-wide text-green-600">
-            {product.brand}
-          </span>
+        <span className="mt-1 truncate text-[11px] font-semibold uppercase tracking-wide text-green-600">
+          {product.brand}
+        </span>
 
-          {/* Fixed-height slot: reserves room for 2 lines. */}
-          <h3 className="line-clamp-2 min-h-[2.25rem] font-display text-sm font-medium leading-snug text-moss-900">
-            {product.name}
-          </h3>
+        {/* Fixed-height slot: reserves room for 2 lines. */}
+        <h3 className="line-clamp-2 min-h-[2.25rem] font-display text-sm font-medium leading-snug text-moss-900">
+          {product.name}
+        </h3>
 
-          {/* Single-line blurb slot keeps the card compact. */}
-          <p className="line-clamp-1 min-h-[1rem] text-xs leading-relaxed text-muted-foreground">
-            {product.blurb}
-          </p>
+        {/* Single-line blurb slot keeps the card compact. */}
+        <p className="line-clamp-1 min-h-[1rem] text-xs leading-relaxed text-muted-foreground">
+          {product.blurb}
+        </p>
 
-          {/* Bottom action row. flex-wrap lets the Add to Cart button drop
+        {/* Bottom action row. flex-wrap lets the Add to Cart button drop
             below the stepper (full width) whenever the card is too narrow
             to fit both side by side, so nothing is ever clipped. */}
-          <div className="mt-auto pt-2">
-            {soldOut ? (
-              <Button
-                variant="outline"
-                disabled
-                className="w-full rounded-full"
-                aria-label={`${product.name} sold out`}
-              >
-                <ShoppingBag className="mr-2 h-4 w-4" />
-                Sold out
-              </Button>
-            ) : (
-              <div
-                className="flex flex-wrap items-center gap-1.5"
+        <div className="mt-auto pt-2">
+          <div
+            className="flex flex-wrap items-center gap-1.5"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            <div className="flex shrink-0 items-center rounded-full border border-moss-200 bg-white">
+              <button
+                type="button"
+                aria-label={`Decrease quantity of ${product.name}`}
+                className="flex h-9 w-7 items-center justify-center text-moss-700 hover:text-green-700 disabled:cursor-not-allowed disabled:text-moss-300"
+                disabled={soldOut || pendingQty <= 1}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  setPendingQty((q) => Math.max(1, q - 1));
                 }}
               >
-                <div className="flex shrink-0 items-center rounded-full border border-moss-200 bg-white">
-                  <button
-                    type="button"
-                    aria-label={`Decrease quantity of ${product.name}`}
-                    className="flex h-9 w-7 items-center justify-center text-moss-700 hover:text-green-700 disabled:cursor-not-allowed disabled:text-moss-300"
-                    disabled={pendingQty <= 1}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setPendingQty((q) => Math.max(1, q - 1));
-                    }}
-                  >
-                    −
-                  </button>
-                  <span className="w-5 text-center font-mono text-sm text-moss-900">
-                    {pendingQty}
-                  </span>
-                  <button
-                    type="button"
-                    aria-label={`Increase quantity of ${product.name}`}
-                    className="flex h-9 w-7 items-center justify-center text-moss-700 hover:text-green-700"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setPendingQty((q) => q + 1);
-                    }}
-                  >
-                    +
-                  </button>
-                </div>
+                −
+              </button>
+              <span className="w-5 text-center font-mono text-sm text-moss-900">
+                {pendingQty}
+              </span>
+              <button
+                type="button"
+                aria-label={`Increase quantity of ${product.name}`}
+                className="flex h-9 w-7 items-center justify-center text-moss-700 hover:text-green-700 disabled:cursor-not-allowed disabled:text-moss-300"
+                disabled={soldOut}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setPendingQty((q) => q + 1);
+                }}
+              >
+                +
+              </button>
+            </div>
 
-                <Button
-                  type="button"
-                  className="h-9 min-w-[7rem] flex-1 whitespace-nowrap rounded-full bg-green-600 px-3 text-white hover:bg-green-700"
-                  onClick={handleAddToCart}
-                >
-                  {cartQty > 0 && cartQty === pendingQty
-                    ? "In Cart"
-                    : cartQty > 0
-                      ? "Update"
-                      : "Add to Cart"}
-                </Button>
-              </div>
-            )}
+            <Button
+              type="button"
+              disabled={soldOut}
+              className="h-9 min-w-[7rem] flex-1 whitespace-nowrap rounded-full bg-green-600 px-3 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-moss-200 disabled:text-moss-500 disabled:opacity-100"
+              onClick={handleAddToCart}
+            >
+              {soldOut
+                ? "Sold Out"
+                : cartQty > 0 && cartQty === pendingQty
+                  ? "In Cart"
+                  : cartQty > 0
+                    ? "Update"
+                    : "Add to Cart"}
+            </Button>
           </div>
         </div>
-      )}
+      </div>
     </>
   );
-
-  // Sold-out products aren't clickable at all — plain div, not a Link.
-  if (soldOut) {
-    return (
-      <div
-        aria-disabled="true"
-        className="paper-fold relative flex h-full min-w-0 cursor-not-allowed flex-col overflow-hidden rounded-2xl border border-moss-100 bg-card shadow-sm"
-      >
-        {cardInner}
-      </div>
-    );
-  }
 
   return (
     <Link
@@ -269,7 +226,7 @@ export function ProductCard({ product }: { product: Product }) {
 export function ProductCardSkeleton() {
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-moss-100 bg-card shadow-sm">
-      <Skeleton className="aspect-[4/3] w-full rounded-none" />
+      <Skeleton className="aspect-square w-full rounded-none" />
 
       <div className="flex flex-1 flex-col gap-1 p-3 sm:p-5">
         <Skeleton className="h-6 w-16 rounded-md" />

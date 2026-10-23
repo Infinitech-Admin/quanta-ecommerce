@@ -1,5 +1,3 @@
-
-
 export type Category =
   | "Paper"
   | "Personal Care"
@@ -28,19 +26,21 @@ export type Product = {
   totalOrders?: number; // only present on the best-sellers response
 };
 
+// Sections shown in the UI (tabs, navbar strip), in display order.
+// "Health and Beauty" is still a valid backend Category but is no longer
+// listed as a section.
 export const CATEGORIES: Category[] = [
   "Paper",
   "Personal Care",
   "Oral Care",
   "Baby Care",
-  "Health and Beauty",
 ];
 
 // Display-only labels — the underlying Category values stay as "Paper" etc.
 // (they must match what the Laravel backend sends and what's used in URLs
 // and filtering). This map only controls what text shows in the UI.
 export const CATEGORY_LABELS: Record<Category, string> = {
-  Paper: "Paper And Tissue",
+  Paper: "Paper",
   "Personal Care": "Personal Care",
   "Oral Care": "Oral Care",
   "Baby Care": "Baby Care",

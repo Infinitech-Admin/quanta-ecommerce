@@ -33,14 +33,18 @@ export async function GET() {
 // /api/categories/[id] instead (see that route file) — this endpoint
 // only ever creates.
 export async function POST(req: NextRequest) {
+  const token = req.cookies.get("auth_token")?.value;
   const formData = await req.formData();
 
-  const res = await fetch(`${API_URL}/categories`, {
+  const res = await fetch(`${API_URL}/admin/categories`, {
     method: "POST",
+    headers: {
+      Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: formData,
   });
 
-  const data = await res.json();
-
+  const data = await res.json().catch(() => ({}));
   return NextResponse.json(data, { status: res.status });
 }

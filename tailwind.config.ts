@@ -11,8 +11,24 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        display: ["var(--font-fraunces)", "serif"],
-        body: ["var(--font-manrope)", "sans-serif"],
+        sans: [
+          "var(--font-manrope)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
+        display: [
+          "var(--font-manrope)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
+        body: [
+          "var(--font-manrope)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
       },
       colors: {
         border: "oklch(var(--border) / <alpha-value>)",

@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import {
@@ -13,11 +12,78 @@ import {
 import { CATEGORIES, BRANDS, CATEGORY_LABELS } from "@/types/product";
 import { cn } from "@/lib/utils";
 
+const LABELS = CATEGORY_LABELS as Record<string, string>;
+
+// Unique, non-empty values. Anything in `preferredOrder` comes first (in that
+// order); everything else follows alphabetically.
+function uniqueSorted(values: unknown[], preferredOrder: readonly string[]) {
+  const set = new Set<string>();
+  for (const v of values) {
+    if (typeof v === "string" && v.trim()) set.add(v.trim());
+  }
+  const preferred = preferredOrder.filter((v) => set.has(v));
+  const rest = [...set]
+    .filter((v) => !preferredOrder.includes(v))
+    .sort((a, b) => a.localeCompare(b));
+  return [...preferred, ...rest];
+}
+
 export function CategoryStrip() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeCategory = searchParams.get("category");
   const activeBrand = searchParams.get("brand");
+
+  // Start with the static lists so the strip isn't empty on first paint or
+  // if the request fails; then replace them with what's actually in the
+  // database (the categories/brands you enter in the admin Products page).
+  const [categories, setCategories] = React.useState<string[]>([...CATEGORIES]);
+  const [brands, setBrands] = React.useState<string[]>([...BRANDS]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const res = await fetch("/api/products", { cache: "no-store" });
+        if (!res.ok) throw new Error("Failed to load products");
+        const data = await res.json();
+
+        // API returns { products: [...] }; also accept a raw array / { data }.
+        const products: { category?: string; brand?: string }[] = Array.isArray(
+          data,
+        )
+          ? data
+          : Array.isArray(data?.products)
+            ? data.products
+            : Array.isArray(data?.data)
+              ? data.data
+              : [];
+
+        if (cancelled || products.length === 0) return;
+
+        setCategories(
+          uniqueSorted(
+            products.map((p) => p.category),
+            CATEGORIES,
+          ),
+        );
+        setBrands(
+          uniqueSorted(
+            products.map((p) => p.brand),
+            BRANDS,
+          ),
+        );
+      } catch {
+        // keep the static fallback lists
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const goToCategory = (category: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -63,7 +129,7 @@ export function CategoryStrip() {
             align="start"
             className="grid w-[min(90vw,640px)] grid-cols-2 gap-x-2 gap-y-1 p-2 sm:grid-cols-3 md:grid-cols-4"
           >
-            {BRANDS.map((brand) => (
+            {brands.map((brand) => (
               <DropdownMenuItem
                 key={brand}
                 onSelect={() => goToBrand(brand)}
@@ -78,7 +144,7 @@ export function CategoryStrip() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {CATEGORIES.map((category) => (
+        {categories.map((category) => (
           <button
             key={category}
             onClick={() => goToCategory(category)}
@@ -87,7 +153,7 @@ export function CategoryStrip() {
               activeCategory === category && "text-green-600",
             )}
           >
-            {CATEGORY_LABELS[category]}
+            {LABELS[category] ?? category}
           </button>
         ))}
       </div>
