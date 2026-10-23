@@ -7,7 +7,7 @@ import styles from "./not-found.module.css";
  * Next.js automatically renders this whenever a route isn't matched,
  * or when you manually call notFound() from a route/page.
  */
-export default function NotFound(): JSX.Element {
+export default function NotFound() {
   return (
     <div className={styles.page}>
       <div className={styles.container}>
