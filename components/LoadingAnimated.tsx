@@ -7,11 +7,19 @@ import { cn } from "@/lib/utils";
 
 /* Rolling-tissue loader, redrawn to match the reference video:
    a round roll (back disc offset up-left, light blue-grey body) rolls left
-   to right, peeling a flat perforated strip onto the ground behind it. */
-const CYCLE_MS = 3000;
+   to right, peeling a flat perforated strip onto the ground behind it.
+
+   Speed-ups vs. the old version:
+   - shorter animation (about 1.9s instead of 3.8s + 0.5s)
+   - plays once per browser session, not on every page load / refresh
+   - skipped for people who prefer reduced motion
+   - the page renders underneath the overlay, so it is never kept waiting */
+const CYCLE_MS = 1500;
 /* logo appears as the roll finishes and stays until the page shows */
-const LOGO_DELAY_MS = 2100;
-const TOTAL_MS = 3800;
+const LOGO_DELAY_MS = 900;
+const TOTAL_MS = 1900;
+const FADE_OUT_MS = 300;
+const SEEN_KEY = "qp-loader-seen";
 
 const R = 50; // face radius
 const BX = -20; // back disc offset (up-left of the face)
@@ -48,6 +56,8 @@ function arc(r: number, a0: number, a1: number) {
   return `M ${p(a0)} A ${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${p(a1)}`;
 }
 
+type Phase = "pending" | "play" | "done";
+
 export default function LoadingAnimated({
   children,
   className,
@@ -55,35 +65,61 @@ export default function LoadingAnimated({
   children: React.ReactNode;
   className?: string;
 }) {
-  const [loading, setLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [phase, setPhase] = useState<Phase>("pending");
+  const [fading, setFading] = useState(false);
 
-  useEffect(() => setReady(true), []);
-
+  // Decide once on mount whether the loader should play at all.
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), TOTAL_MS);
-    return () => clearTimeout(t);
+    let seen = false;
+    try {
+      seen = sessionStorage.getItem(SEEN_KEY) === "1";
+    } catch {
+      /* storage blocked: just play it */
+    }
+
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    if (seen || reduceMotion) {
+      setPhase("done");
+      return;
+    }
+
+    try {
+      sessionStorage.setItem(SEEN_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    setPhase("play");
   }, []);
 
+  // Run the timers only while the loader is playing.
   useEffect(() => {
-    if (!loading) {
-      const t = setTimeout(() => setMounted(true), 500);
-      return () => clearTimeout(t);
-    }
-  }, [loading]);
+    if (phase !== "play") return;
+
+    const fadeTimer = setTimeout(() => setFading(true), TOTAL_MS);
+    const doneTimer = setTimeout(
+      () => setPhase("done"),
+      TOTAL_MS + FADE_OUT_MS,
+    );
+
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(doneTimer);
+    };
+  }, [phase]);
 
   return (
     <>
-      {ready &&
-        !mounted &&
+      {phase === "play" &&
         createPortal(
           <div
             role="status"
             aria-label="Loading"
             className={cn(
-              "fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-[#f6f9fb] transition-opacity duration-500",
-              loading ? "opacity-100" : "opacity-0 pointer-events-none",
+              "fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-[#f6f9fb] transition-opacity duration-300",
+              fading ? "opacity-0 pointer-events-none" : "opacity-100",
             )}
           >
             <div className="flex flex-col items-center px-6">
@@ -321,10 +357,12 @@ export default function LoadingAnimated({
           document.body,
         )}
 
+      {/* Hidden only for the instant before we know whether to play the
+          loader. Otherwise the page is always rendered under the overlay. */}
       <div
         className={cn(
-          "transition-opacity duration-700",
-          mounted ? "opacity-100" : "opacity-0",
+          "transition-opacity duration-300",
+          phase === "pending" ? "opacity-0" : "opacity-100",
           className,
         )}
       >
@@ -349,7 +387,7 @@ export default function LoadingAnimated({
         }
         .brand {
           opacity: 0;
-          animation: fade-in 700ms ease-out ${LOGO_DELAY_MS}ms forwards;
+          animation: fade-in 500ms ease-out ${LOGO_DELAY_MS}ms forwards;
         }
 
         @keyframes travel {
@@ -392,22 +430,6 @@ export default function LoadingAnimated({
         }
         @keyframes fade-in {
           to {
-            opacity: 1;
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .cycle,
-          .move,
-          .spin,
-          .strip-clip,
-          .brand {
-            animation: none;
-          }
-          .move {
-            transform: translateX(${TRAVEL}px);
-          }
-          .brand {
             opacity: 1;
           }
         }
