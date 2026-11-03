@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -25,10 +25,100 @@ import { buildProductHref } from "@/lib/slug";
 
 const ALL = "All Items" as const;
 
+// 24 divides evenly into the 2, 3 and 4 column grids, so the last row is
+// always full. Change this one number to adjust the page size.
+const PAGE_SIZE = 24;
+
+/** Builds [1, "…", 4, 5, 6, "…", 12] style page lists. */
+function getPageItems(current: number, total: number): (number | string)[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+  const items: (number | string)[] = [1];
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+
+  if (start > 2) items.push("ellipsis-start");
+  for (let i = start; i <= end; i++) items.push(i);
+  if (end < total - 1) items.push("ellipsis-end");
+
+  items.push(total);
+  return items;
+}
+
+function ShopPagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+
+  return (
+    <nav
+      aria-label="Pagination"
+      className="mt-10 flex flex-wrap items-center justify-center gap-1.5"
+    >
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={currentPage === 1}
+        onClick={() => onPageChange(currentPage - 1)}
+        aria-label="Previous page"
+      >
+        <ChevronLeft className="h-4 w-4" />
+        <span className="hidden sm:inline">Previous</span>
+      </Button>
+
+      {getPageItems(currentPage, totalPages).map((item) =>
+        typeof item === "string" ? (
+          <span
+            key={item}
+            className="px-2 text-sm text-muted-foreground"
+            aria-hidden
+          >
+            …
+          </span>
+        ) : (
+          <Button
+            key={item}
+            variant={item === currentPage ? "default" : "outline"}
+            size="sm"
+            className={
+              item === currentPage
+                ? "min-w-9 bg-green-600 text-white hover:bg-green-600"
+                : "min-w-9"
+            }
+            aria-label={`Page ${item}`}
+            aria-current={item === currentPage ? "page" : undefined}
+            onClick={() => onPageChange(item)}
+          >
+            {item}
+          </Button>
+        ),
+      )}
+
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={currentPage === totalPages}
+        onClick={() => onPageChange(currentPage + 1)}
+        aria-label="Next page"
+      >
+        <span className="hidden sm:inline">Next</span>
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+    </nav>
+  );
+}
+
 export default function ShopPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const gridTopRef = React.useRef<HTMLDivElement>(null);
   const [products, setProducts] = React.useState<Product[]>([]);
   const [status, setStatus] = React.useState<"loading" | "ready" | "error">(
     "loading",
@@ -48,26 +138,50 @@ export default function ShopPage() {
   }));
   const [mobileFiltersOpen, setMobileFiltersOpen] = React.useState(false);
 
+  // The current page lives in the URL (?page=2) so it survives refresh and
+  // can be shared. Page 1 has no param.
+  const requestedPage = Math.max(1, Number(searchParams.get("page")) || 1);
+
+  const searchParam = searchParams.get("search") ?? "";
+  const categoryParam = searchParams.get("category");
+  const brandParam = searchParams.get("brand");
+
   // Keep the search box, active category tab, and brand filter in sync with
   // the URL whenever it changes — covers both initial load and clicking
   // CategoryStrip (navbar) links while already on /shop.
+  // Depends on the individual params (not the whole searchParams object) so
+  // changing only ?page= does not reset the sidebar filters.
   React.useEffect(() => {
-    setSearchInput(searchParams.get("search") ?? "");
+    setSearchInput(searchParam);
 
-    const urlCategory = searchParams.get("category");
     setActive(
-      urlCategory &&
-        CATEGORIES.includes(urlCategory as (typeof CATEGORIES)[number])
-        ? urlCategory
+      categoryParam &&
+        CATEGORIES.includes(categoryParam as (typeof CATEGORIES)[number])
+        ? categoryParam
         : ALL,
     );
 
-    const urlBrand = searchParams.get("brand");
     setFilters((prev) => ({
       ...prev,
-      brands: urlBrand ? [urlBrand] : [],
+      brands: brandParam ? [brandParam] : [],
     }));
-  }, [searchParams]);
+  }, [searchParam, categoryParam, brandParam]);
+
+  const pushParams = (params: URLSearchParams) => {
+    const qs = params.toString();
+    router.push(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+  };
+
+  const goToPage = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (page <= 1) {
+      params.delete("page");
+    } else {
+      params.set("page", String(page));
+    }
+    pushParams(params);
+    gridTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   // Fired when the user clicks a category tab. Updates local state right
   // away (so filtering feels instant) and pushes the category onto the URL
@@ -81,8 +195,19 @@ export default function ShopPage() {
     } else {
       params.set("category", value);
     }
-    const qs = params.toString();
-    router.push(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+    params.delete("page");
+    pushParams(params);
+  };
+
+  // Any filter change goes back to page 1.
+  const handleFiltersChange = (next: Filters) => {
+    setFilters(next);
+
+    if (searchParams.get("page")) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("page");
+      pushParams(params);
+    }
   };
 
   const fetchProducts = React.useCallback(async () => {
@@ -154,6 +279,12 @@ export default function ShopPage() {
       .map(({ p }) => p);
   }, [products, active, filters, searchInput]);
 
+  // Pagination. Clamp so a stale ?page=99 just shows the last page.
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(requestedPage, totalPages);
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const pageProducts = filtered.slice(startIndex, startIndex + PAGE_SIZE);
+
   return (
     <>
       {/* Background layer */}
@@ -192,84 +323,103 @@ export default function ShopPage() {
           </Button>
         </div>
 
-        <Tabs value={active} onValueChange={handleCategoryChange}>
-          <TabsList className="mb-8 flex-wrap h-auto">
-            <TabsTrigger
-              value={ALL}
-              className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
-            >
-              {ALL}
-            </TabsTrigger>
-            {CATEGORIES.map((cat) => (
+        <div ref={gridTopRef} className="scroll-mt-28">
+          <Tabs value={active} onValueChange={handleCategoryChange}>
+            <TabsList className="mb-8 flex-wrap h-auto">
               <TabsTrigger
-                key={cat}
-                value={cat}
+                value={ALL}
                 className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
               >
-                {CATEGORY_LABELS[cat]}
+                {ALL}
               </TabsTrigger>
-            ))}
-          </TabsList>
+              {CATEGORIES.map((cat) => (
+                <TabsTrigger
+                  key={cat}
+                  value={cat}
+                  className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
+                >
+                  {CATEGORY_LABELS[cat]}
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[220px_1fr]">
-            <aside className="hidden lg:block">
-              <div className="sticky top-28">
-                <FilterSidebar filters={filters} onChange={setFilters} />
-              </div>
-            </aside>
+            <div className="grid grid-cols-1 gap-10 lg:grid-cols-[220px_1fr]">
+              <aside className="hidden lg:block">
+                <div className="sticky top-28">
+                  <FilterSidebar
+                    filters={filters}
+                    onChange={handleFiltersChange}
+                  />
+                </div>
+              </aside>
 
-            <TabsContent value={active} className="mt-0">
-              {status === "loading" ? (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 xl:grid-cols-4">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <ProductCardSkeleton key={i} />
-                  ))}
-                </div>
-              ) : status === "error" ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-moss-200 py-20 text-center">
-                  <p className="font-display text-lg text-moss-900">
-                    Couldn&apos;t load products
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Please refresh the page or try again shortly.
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="mt-4"
-                    onClick={fetchProducts}
-                  >
-                    Try again
-                  </Button>
-                </div>
-              ) : filtered.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-moss-200 py-20 text-center">
-                  <p className="font-display text-lg text-moss-900">
-                    {searchInput
-                      ? `No products found for "${searchInput}"`
-                      : "No products match yet"}
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {searchInput
-                      ? "Try a different keyword or clear the search."
-                      : "Try widening your price range or clearing a filter."}
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 xl:grid-cols-4">
-                  {filtered.map((product) => (
-                    <Link
-                      key={product.id}
-                      href={buildProductHref(product)}
-                      className="block"
+              <TabsContent value={active} className="mt-0">
+                {status === "loading" ? (
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 xl:grid-cols-4">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <ProductCardSkeleton key={i} />
+                    ))}
+                  </div>
+                ) : status === "error" ? (
+                  <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-moss-200 py-20 text-center">
+                    <p className="font-display text-lg text-moss-900">
+                      Couldn&apos;t load products
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Please refresh the page or try again shortly.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="mt-4"
+                      onClick={fetchProducts}
                     >
-                      <ProductCard product={product} />
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-          </div>
-        </Tabs>
+                      Try again
+                    </Button>
+                  </div>
+                ) : filtered.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-moss-200 py-20 text-center">
+                    <p className="font-display text-lg text-moss-900">
+                      {searchInput
+                        ? `No products found for "${searchInput}"`
+                        : "No products match yet"}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {searchInput
+                        ? "Try a different keyword or clear the search."
+                        : "Try widening your price range or clearing a filter."}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="mb-4 text-sm text-muted-foreground">
+                      Showing {startIndex + 1}–
+                      {Math.min(startIndex + PAGE_SIZE, filtered.length)} of{" "}
+                      {filtered.length} products
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 xl:grid-cols-4">
+                      {pageProducts.map((product) => (
+                        <Link
+                          key={product.id}
+                          href={buildProductHref(product)}
+                          className="block"
+                        >
+                          <ProductCard product={product} />
+                        </Link>
+                      ))}
+                    </div>
+
+                    <ShopPagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={goToPage}
+                    />
+                  </>
+                )}
+              </TabsContent>
+            </div>
+          </Tabs>
+        </div>
 
         {/* Mobile filter sheet */}
         <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
@@ -278,7 +428,7 @@ export default function ShopPage() {
               <SheetTitle>Filters</SheetTitle>
             </SheetHeader>
             <div className="mt-4">
-              <FilterSidebar filters={filters} onChange={setFilters} />
+              <FilterSidebar filters={filters} onChange={handleFiltersChange} />
             </div>
           </SheetContent>
         </Sheet>
