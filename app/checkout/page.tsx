@@ -98,8 +98,8 @@ const STEP_LABELS = ["Contact", "Shipping", "Payment"];
 function StepEyebrow({ index, label }: { index: number; label: string }) {
   return (
     <div className="flex items-baseline gap-2.5">
-      <span className="font-mono text-xs text-moss-400">0{index}</span>
-      <h2 className="font-display text-lg font-semibold italic text-moss-900">
+      <span className="font-mono text-xs text-[#252927]/50">0{index}</span>
+      <h2 className="font-display text-lg font-semibold italic text-[#252927]">
         {label}
       </h2>
     </div>
@@ -109,9 +109,10 @@ function StepEyebrow({ index, label }: { index: number; label: string }) {
 function TornDivider() {
   return (
     <div className="relative">
-      <div className="absolute -left-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-background sm:-left-6" />
-      <div className="absolute -right-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-background sm:-right-6" />
-      <div className="border-t border-dashed border-moss-200" />
+      {/* Notch circles use the Paper White page background */}
+      <div className="absolute -left-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-[#F8F7F4] sm:-left-6" />
+      <div className="absolute -right-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-[#F8F7F4] sm:-right-6" />
+      <div className="border-t border-dashed border-[#C6C8C5]" />
     </div>
   );
 }
@@ -327,416 +328,421 @@ export default function CheckoutPage() {
 
   return (
     <>
-      {/* Background layer */}
-      <div className="fixed inset-0 -z-10">
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-100"
-          style={{ backgroundImage: "url('/checkout.png')" }}
-        />
-        {/* Readability overlay — lower the /NN value to let more image show through */}
-        <div className="absolute inset-0 bg-background/30" />
-      </div>
+      {/* Paper White (#F8F7F4) page background from the brand palette.
+          Quanta Green is reserved for the hero banner. */}
+      <div aria-hidden className="fixed inset-0 -z-10 bg-[#F8F7F4]" />
 
       <Navbar />
-      <main className="container max-w-6xl py-6 sm:py-8">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-moss-700 hover:text-moss-900"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to shop
-        </Link>
+      <main className="flex-1">
+        {/* Hero banner — Quanta Green (#00A552) */}
+        <section className="bg-[#00A552]">
+          <div className="container max-w-6xl py-8 sm:py-10">
+            <Link
+              href="/shop"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-white/90 hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to shop
+            </Link>
 
-        <div className="mt-3 flex items-baseline justify-between">
-          <h1 className="font-display text-2xl font-medium italic text-moss-900 sm:text-3xl">
-            Checkout
-          </h1>
-          <p className="font-mono text-xs text-moss-400">
-            {STEP_LABELS.join(" · ")}
-          </p>
-        </div>
-
-        {orderPlaced ? (
-          <div className="mt-6 rounded-2xl border border-moss-100 bg-card p-10 text-center shadow-sm">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-moss-50">
-              <Check className="h-7 w-7 text-forest" strokeWidth={3} />
+            <div className="mt-3 flex items-baseline justify-between">
+              <h1 className="font-display text-2xl font-medium italic text-white sm:text-3xl">
+                Checkout
+              </h1>
+              <p className="font-mono text-xs text-white/80">
+                {STEP_LABELS.join(" · ")}
+              </p>
             </div>
-            <p className="mt-4 font-display text-xl font-medium italic text-moss-900">
-              Order placed!
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              We&apos;ll confirm your payment and get your order moving.
-            </p>
+          </div>
+        </section>
 
-            {trackingNumber && (
-              <div className="mx-auto mt-5 flex w-fit flex-col items-center gap-1 rounded-xl border border-dashed border-moss-200 bg-moss-pale/40 px-5 py-3">
-                <span className="text-[11px] font-medium uppercase tracking-widest2 text-moss-500">
-                  Tracking number
-                </span>
-                <span className="font-mono text-sm font-semibold text-moss-900">
-                  {trackingNumber}
-                </span>
+        <div className="container max-w-6xl py-6 sm:py-8">
+          {orderPlaced ? (
+            <div className="rounded-2xl border border-[#C6C8C5] bg-white p-10 text-center shadow-sm">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F8F7F4]">
+                <Check className="h-7 w-7 text-[#006B3F]" strokeWidth={3} />
               </div>
-            )}
+              <p className="mt-4 font-display text-xl font-medium italic text-[#252927]">
+                Order placed!
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                We&apos;ll confirm your payment and get your order moving.
+              </p>
 
-            <Button asChild variant="gradient" className="mt-5">
-              <Link href="/orders">View my orders</Link>
-            </Button>
-          </div>
-        ) : count === 0 ? (
-          <div className="mt-6 rounded-2xl border border-dashed border-moss-200 p-10 text-center">
-            <p className="font-display text-lg text-moss-900">
-              Your cart is empty
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Add items to your cart before checking out.
-            </p>
-            <Button asChild variant="gradient" className="mt-5">
-              <Link href="/#shop">Browse products</Link>
-            </Button>
-          </div>
-        ) : (
-          <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px] lg:items-start">
-            {/* Left: form steps */}
-            <div className="flex flex-col divide-y divide-moss-100 rounded-2xl border border-moss-100 bg-card shadow-sm">
-              {!userLoading && !currentUser && (
-                <div className="m-5 flex flex-col items-start gap-2 rounded-xl border border-moss-200 bg-moss-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm text-moss-800">
-                    Log in so we can save this order to your account.
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openAuth("register")}
-                    >
-                      Register
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="gradient"
-                      size="sm"
-                      onClick={() => openAuth("login")}
-                    >
-                      Log in
-                    </Button>
-                  </div>
+              {trackingNumber && (
+                <div className="mx-auto mt-5 flex w-fit flex-col items-center gap-1 rounded-xl border border-dashed border-[#C6C8C5] bg-[#F8F7F4] px-5 py-3">
+                  <span className="text-[11px] font-medium uppercase tracking-widest2 text-moss-500">
+                    Tracking number
+                  </span>
+                  <span className="font-mono text-sm font-semibold text-[#252927]">
+                    {trackingNumber}
+                  </span>
                 </div>
               )}
 
-              {errors.length > 0 && (
-                <div
-                  ref={errorRef}
-                  className="m-5 flex flex-col gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-4"
-                >
-                  <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    Please fix the following before placing your order:
-                  </div>
-                  <ul className="ml-6 list-disc space-y-0.5 text-sm text-destructive">
-                    {errors.map((err) => (
-                      <li key={err}>{err}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Contact */}
-              <section className="p-5">
-                <StepEyebrow index={1} label="Contact" />
-                <div className="mt-3">
-                  <Label htmlFor="email" className="text-xs text-moss-500">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@email.com"
-                    className="mt-1"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={!!currentUser}
-                  />
-                </div>
-              </section>
-
-              {/* Shipping */}
-              <section className="p-5">
-                <StepEyebrow index={2} label="Shipping address" />
-                <div className="mt-3 grid grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="first" className="text-xs text-moss-500">
-                      First name
-                    </Label>
-                    <Input
-                      id="first"
-                      placeholder="Juana"
-                      className="mt-1"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      disabled={!!currentUser}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="last" className="text-xs text-moss-500">
-                      Last name
-                    </Label>
-                    <Input
-                      id="last"
-                      placeholder="Dela Cruz"
-                      className="mt-1"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      disabled={!!currentUser}
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Label htmlFor="address" className="text-xs text-moss-500">
-                      Address
-                    </Label>
-                    <Input
-                      id="address"
-                      placeholder="Street, Barangay"
-                      className="mt-1"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="city" className="text-xs text-moss-500">
-                      City
-                    </Label>
-                    <Input
-                      id="city"
-                      placeholder="Taguig City"
-                      className="mt-1"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="zip" className="text-xs text-moss-500">
-                      Postal code
-                    </Label>
-                    <Input
-                      id="zip"
-                      placeholder="1632"
-                      className="mt-1"
-                      value={zip}
-                      onChange={(e) => setZip(e.target.value)}
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Label htmlFor="phone" className="text-xs text-moss-500">
-                      Phone
-                    </Label>
-                    <Input
-                      id="phone"
-                      placeholder="+63 9XX XXX XXXX"
-                      className="mt-1"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </section>
-
-              {/* Payment */}
-              <section className="p-5">
-                <StepEyebrow index={3} label="Payment" />
-
-                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {PAYMENT_METHODS.map((method) => {
-                    const Icon = method.icon;
-                    const active = payment === method.id;
-                    return (
-                      <button
-                        key={method.id}
+              <Button asChild variant="gradient" className="mt-5">
+                <Link href="/orders">View my orders</Link>
+              </Button>
+            </div>
+          ) : count === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[#C6C8C5] bg-white p-10 text-center">
+              <p className="font-display text-lg text-[#252927]">
+                Your cart is empty
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Add items to your cart before checking out.
+              </p>
+              <Button asChild variant="gradient" className="mt-5">
+                <Link href="/#shop">Browse products</Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px] lg:items-start">
+              {/* Left: form steps */}
+              <div className="flex flex-col divide-y divide-[#C6C8C5] rounded-2xl border border-[#C6C8C5] bg-white shadow-sm">
+                {!userLoading && !currentUser && (
+                  <div className="m-5 flex flex-col items-start gap-2 rounded-xl border border-[#C6C8C5] bg-[#F8F7F4] p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm text-[#252927]">
+                      Log in so we can save this order to your account.
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
                         type="button"
-                        onClick={() => setPayment(method.id)}
-                        aria-pressed={active}
-                        className={`relative flex flex-col items-start gap-2 rounded-xl border-2 p-3 text-left transition-colors focus-ring ${
-                          active
-                            ? "border-forest bg-moss-50"
-                            : "border-moss-100 hover:border-moss-300"
-                        }`}
+                        variant="outline"
+                        size="sm"
+                        className="bg-white"
+                        onClick={() => openAuth("register")}
                       >
-                        {active && (
-                          <span className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-forest">
-                            <Check
-                              className="h-2.5 w-2.5 text-paper"
-                              strokeWidth={3}
-                            />
-                          </span>
-                        )}
-                        <span
-                          className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                        Register
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="gradient"
+                        size="sm"
+                        onClick={() => openAuth("login")}
+                      >
+                        Log in
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {errors.length > 0 && (
+                  <div
+                    ref={errorRef}
+                    className="m-5 flex flex-col gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-4"
+                  >
+                    <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      Please fix the following before placing your order:
+                    </div>
+                    <ul className="ml-6 list-disc space-y-0.5 text-sm text-destructive">
+                      {errors.map((err) => (
+                        <li key={err}>{err}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Contact */}
+                <section className="p-5">
+                  <StepEyebrow index={1} label="Contact" />
+                  <div className="mt-3">
+                    <Label htmlFor="email" className="text-xs text-moss-500">
+                      Email
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="you@email.com"
+                      className="mt-1"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={!!currentUser}
+                    />
+                  </div>
+                </section>
+
+                {/* Shipping */}
+                <section className="p-5">
+                  <StepEyebrow index={2} label="Shipping address" />
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="first" className="text-xs text-moss-500">
+                        First name
+                      </Label>
+                      <Input
+                        id="first"
+                        placeholder="Juana"
+                        className="mt-1"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        disabled={!!currentUser}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="last" className="text-xs text-moss-500">
+                        Last name
+                      </Label>
+                      <Input
+                        id="last"
+                        placeholder="Dela Cruz"
+                        className="mt-1"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        disabled={!!currentUser}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Label
+                        htmlFor="address"
+                        className="text-xs text-moss-500"
+                      >
+                        Address
+                      </Label>
+                      <Input
+                        id="address"
+                        placeholder="Street, Barangay"
+                        className="mt-1"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="city" className="text-xs text-moss-500">
+                        City
+                      </Label>
+                      <Input
+                        id="city"
+                        placeholder="Taguig City"
+                        className="mt-1"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="zip" className="text-xs text-moss-500">
+                        Postal code
+                      </Label>
+                      <Input
+                        id="zip"
+                        placeholder="1632"
+                        className="mt-1"
+                        value={zip}
+                        onChange={(e) => setZip(e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Label htmlFor="phone" className="text-xs text-moss-500">
+                        Phone
+                      </Label>
+                      <Input
+                        id="phone"
+                        placeholder="+63 9XX XXX XXXX"
+                        className="mt-1"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                {/* Payment */}
+                <section className="p-5">
+                  <StepEyebrow index={3} label="Payment" />
+
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {PAYMENT_METHODS.map((method) => {
+                      const Icon = method.icon;
+                      const active = payment === method.id;
+                      return (
+                        <button
+                          key={method.id}
+                          type="button"
+                          onClick={() => setPayment(method.id)}
+                          aria-pressed={active}
+                          className={`relative flex flex-col items-start gap-2 rounded-xl border-2 p-3 text-left transition-colors focus-ring ${
                             active
-                              ? "bg-forest text-paper"
-                              : "bg-moss-50 text-moss-600"
+                              ? "border-[#006B3F] bg-[#F8F7F4]"
+                              : "border-[#C6C8C5] bg-white hover:border-[#006B3F]/60"
                           }`}
                         >
-                          <Icon className="h-4 w-4" />
-                        </span>
-                        <span className="text-xs font-semibold text-moss-900">
-                          {method.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Method detail panel */}
-                <div className="mt-4 rounded-xl border border-moss-100 bg-moss-pale/40 p-4">
-                  <p className="font-mono text-xs text-moss-800">
-                    {activeMethod.instruction}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {activeMethod.detail}
-                  </p>
-
-                  {activeMethod.needsProof && (
-                    <div className="mt-4">
-                      <TornDivider />
-                      <p className="mt-4 text-xs font-semibold uppercase tracking-widest2 text-moss-500">
-                        Upload proof of payment
-                      </p>
-
-                      {!proofPreview ? (
-                        <label
-                          htmlFor="proof"
-                          className="mt-2 flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-moss-200 bg-background/60 px-4 py-6 text-center hover:border-moss-400"
-                        >
-                          <UploadCloud className="h-5 w-5 text-moss-400" />
-                          <span className="text-xs font-medium text-moss-700">
-                            Tap to upload a screenshot
-                          </span>
-                          <span className="text-[11px] text-muted-foreground">
-                            PNG or JPG, up to 10MB
-                          </span>
-                          <input
-                            id="proof"
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => handleFile(e.target.files?.[0])}
-                          />
-                        </label>
-                      ) : (
-                        <div className="mt-2 flex items-center gap-3 rounded-xl border border-moss-200 bg-background p-2.5">
-                          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-moss-50">
-                            <Image
-                              src={proofPreview}
-                              alt="Payment proof"
-                              fill
-                              sizes="56px"
-                              className="object-cover"
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-xs font-medium text-moss-900">
-                              {proofName}
-                            </p>
-                            <p className="text-[11px] text-moss-500">
-                              Ready to submit
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={clearProof}
-                            aria-label="Remove uploaded file"
-                            className="rounded-full p-1.5 text-muted-foreground hover:bg-moss-50 hover:text-destructive"
+                          {active && (
+                            <span className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#006B3F]">
+                              <Check
+                                className="h-2.5 w-2.5 text-white"
+                                strokeWidth={3}
+                              />
+                            </span>
+                          )}
+                          <span
+                            className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                              active
+                                ? "bg-[#006B3F] text-white"
+                                : "bg-[#F8F7F4] text-[#252927]/70"
+                            }`}
                           >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                            <Icon className="h-4 w-4" />
+                          </span>
+                          <span className="text-xs font-semibold text-[#252927]">
+                            {method.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
 
-                <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <ShieldCheck className="h-3.5 w-3.5 text-moss-600" />
-                  Your order is only confirmed once payment is verified.
-                </p>
-              </section>
-            </div>
+                  {/* Method detail panel */}
+                  <div className="mt-4 rounded-xl border border-[#C6C8C5] bg-[#F8F7F4] p-4">
+                    <p className="font-mono text-xs text-[#252927]">
+                      {activeMethod.instruction}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {activeMethod.detail}
+                    </p>
 
-            {/* Right: receipt-style summary */}
-            <aside className="lg:sticky lg:top-24 rounded-2xl border border-moss-100 bg-card p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <h2 className="font-display text-base font-semibold italic text-moss-900">
-                  Order summary
-                </h2>
-                <span className="font-mono text-xs text-moss-400">
-                  {count} {count === 1 ? "item" : "items"}
-                </span>
+                    {activeMethod.needsProof && (
+                      <div className="mt-4">
+                        <TornDivider />
+                        <p className="mt-4 text-xs font-semibold uppercase tracking-widest2 text-moss-500">
+                          Upload proof of payment
+                        </p>
+
+                        {!proofPreview ? (
+                          <label
+                            htmlFor="proof"
+                            className="mt-2 flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-[#C6C8C5] bg-white px-4 py-6 text-center hover:border-[#006B3F]"
+                          >
+                            <UploadCloud className="h-5 w-5 text-[#006B3F]" />
+                            <span className="text-xs font-medium text-[#252927]">
+                              Tap to upload a screenshot
+                            </span>
+                            <span className="text-[11px] text-muted-foreground">
+                              PNG or JPG, up to 10MB
+                            </span>
+                            <input
+                              id="proof"
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => handleFile(e.target.files?.[0])}
+                            />
+                          </label>
+                        ) : (
+                          <div className="mt-2 flex items-center gap-3 rounded-xl border border-[#C6C8C5] bg-white p-2.5">
+                            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-[#F8F7F4]">
+                              <Image
+                                src={proofPreview}
+                                alt="Payment proof"
+                                fill
+                                sizes="56px"
+                                className="object-cover"
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-xs font-medium text-[#252927]">
+                                {proofName}
+                              </p>
+                              <p className="text-[11px] text-moss-500">
+                                Ready to submit
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={clearProof}
+                              aria-label="Remove uploaded file"
+                              className="rounded-full p-1.5 text-muted-foreground hover:bg-[#F8F7F4] hover:text-destructive"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <ShieldCheck className="h-3.5 w-3.5 text-[#006B3F]" />
+                    Your order is only confirmed once payment is verified.
+                  </p>
+                </section>
               </div>
 
-              <div className="mt-4 space-y-3">
-                {lines.map((line) => (
-                  <div
-                    key={line.product.id}
-                    className="flex items-center gap-2.5"
-                  >
-                    <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md bg-moss-50">
-                      <Image
-                        src={resolveImageUrl(line.product.image)}
-                        alt={line.product.name}
-                        fill
-                        sizes="36px"
-                        className="object-cover"
-                      />
-                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-forest font-mono text-[9px] font-semibold text-paper">
-                        {line.qty}
+              {/* Right: receipt-style summary */}
+              <aside className="rounded-2xl border border-[#C6C8C5] bg-white p-5 shadow-sm lg:sticky lg:top-24">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-display text-base font-semibold italic text-[#252927]">
+                    Order summary
+                  </h2>
+                  <span className="font-mono text-xs text-[#252927]/50">
+                    {count} {count === 1 ? "item" : "items"}
+                  </span>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {lines.map((line) => (
+                    <div
+                      key={line.product.id}
+                      className="flex items-center gap-2.5"
+                    >
+                      <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md bg-[#F8F7F4]">
+                        <Image
+                          src={resolveImageUrl(line.product.image)}
+                          alt={line.product.name}
+                          fill
+                          sizes="36px"
+                          className="object-cover"
+                        />
+                        <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#006B3F] font-mono text-[9px] font-semibold text-white">
+                          {line.qty}
+                        </span>
+                      </div>
+                      <span className="min-w-0 flex-1 truncate font-mono text-xs text-[#252927]">
+                        {line.product.name}
+                      </span>
+                      <span className="shrink-0 font-mono text-xs font-medium text-[#252927]">
+                        {formatPHP(line.product.price * line.qty)}
                       </span>
                     </div>
-                    <span className="min-w-0 flex-1 truncate font-mono text-xs text-moss-800">
-                      {line.product.name}
-                    </span>
-                    <span className="shrink-0 font-mono text-xs font-medium text-moss-900">
-                      {formatPHP(line.product.price * line.qty)}
-                    </span>
+                  ))}
+                </div>
+
+                <div className="my-4">
+                  <TornDivider />
+                </div>
+
+                <div className="space-y-1.5 font-mono text-xs">
+                  <div className="flex justify-between text-[#252927]/70">
+                    <span>Subtotal</span>
+                    <span>{formatPHP(subtotal)}</span>
                   </div>
-                ))}
-              </div>
-
-              <div className="my-4">
-                <TornDivider />
-              </div>
-
-              <div className="space-y-1.5 font-mono text-xs">
-                <div className="flex justify-between text-moss-600">
-                  <span>Subtotal</span>
-                  <span>{formatPHP(subtotal)}</span>
+                  <div className="flex justify-between pt-2 text-sm font-semibold text-[#252927]">
+                    <span>Total</span>
+                    <span>{formatPHP(total)}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between pt-2 text-sm font-semibold text-moss-900">
-                  <span>Total</span>
-                  <span>{formatPHP(total)}</span>
-                </div>
-              </div>
 
-              <Button
-                variant="gradient"
-                size="lg"
-                className="mt-5 w-full"
-                onClick={handlePlaceOrder}
-                disabled={placingOrder || userLoading || !currentUser}
-              >
-                {placingOrder
-                  ? "Placing order..."
-                  : !currentUser
-                    ? "Log in to place order"
-                    : `Place order · ${formatPHP(total)}`}
-              </Button>
-              <p className="mt-2 text-center text-[11px] text-muted-foreground">
-                Paying via {activeMethod.label.toLowerCase()}
-              </p>
-            </aside>
-          </div>
-        )}
+                <Button
+                  variant="gradient"
+                  size="lg"
+                  className="mt-5 w-full"
+                  onClick={handlePlaceOrder}
+                  disabled={placingOrder || userLoading || !currentUser}
+                >
+                  {placingOrder
+                    ? "Placing order..."
+                    : !currentUser
+                      ? "Log in to place order"
+                      : `Place order · ${formatPHP(total)}`}
+                </Button>
+                <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                  Paying via {activeMethod.label.toLowerCase()}
+                </p>
+              </aside>
+            </div>
+          )}
+        </div>
       </main>
       <Footer />
       <AuthDialog

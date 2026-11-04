@@ -64,6 +64,7 @@ function ShopPagination({
       <Button
         variant="outline"
         size="sm"
+        className="border-[#C6C8C5] bg-white"
         disabled={currentPage === 1}
         onClick={() => onPageChange(currentPage - 1)}
         aria-label="Previous page"
@@ -76,7 +77,7 @@ function ShopPagination({
         typeof item === "string" ? (
           <span
             key={item}
-            className="px-2 text-sm text-muted-foreground"
+            className="px-2 text-sm text-[#252927]/60"
             aria-hidden
           >
             …
@@ -88,8 +89,8 @@ function ShopPagination({
             size="sm"
             className={
               item === currentPage
-                ? "min-w-9 bg-green-600 text-white hover:bg-green-600"
-                : "min-w-9"
+                ? "min-w-9 bg-[#006B3F] text-white hover:bg-[#006B3F]"
+                : "min-w-9 border-[#C6C8C5] bg-white"
             }
             aria-label={`Page ${item}`}
             aria-current={item === currentPage ? "page" : undefined}
@@ -103,6 +104,7 @@ function ShopPagination({
       <Button
         variant="outline"
         size="sm"
+        className="border-[#C6C8C5] bg-white"
         disabled={currentPage === totalPages}
         onClick={() => onPageChange(currentPage + 1)}
         aria-label="Next page"
@@ -287,151 +289,153 @@ export default function ShopPage() {
 
   return (
     <>
-      {/* Background layer */}
-      <div className="fixed inset-0 -z-10">
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-100"
-          style={{ backgroundImage: "url('/shop-design-with-cart.png')" }}
-        />
-        {/* Readability overlay — lower the /NN value to let more image show through */}
-        <div className="absolute inset-0 bg-background/30" />
-      </div>
+      {/* Paper White (#F8F7F4) page background from the brand palette.
+          Quanta Green is reserved for the hero banner and key highlights. */}
+      <div aria-hidden className="fixed inset-0 -z-10 bg-[#F8F7F4]" />
 
       <Navbar />
-      <main className="container flex-1 py-8 sm:py-12">
-        <div className="mb-8 flex flex-col items-start justify-between gap-6 sm:mb-10 sm:flex-row sm:items-end">
-          <div>
-            <span className="text-xs font-semibold uppercase tracking-wide text-green-600">
-              Shop all essentials
-            </span>
-            <h1 className="mt-2 font-display text-3xl font-medium text-moss-900 sm:text-4xl">
-              Shop All Products
-            </h1>
-            <p className="mt-1 max-w-lg text-sm text-muted-foreground">
-              Browse our full catalog of paper, personal care, oral care, and
-              baby care essentials.
-            </p>
+      <main className="flex-1">
+        {/* Hero banner — Quanta Green (#00A552) */}
+        <section className="bg-[#00A552]">
+          <div className="container flex flex-col items-start justify-between gap-6 py-10 sm:flex-row sm:items-end sm:py-12">
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-wide text-white/80">
+                Shop all essentials
+              </span>
+              <h1 className="mt-2 font-display text-3xl font-medium text-white sm:text-4xl">
+                Shop All Products
+              </h1>
+              <p className="mt-1 max-w-lg text-sm text-white/90">
+                Browse our full catalog of paper, personal care, oral care, and
+                baby care essentials.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-white lg:hidden"
+              onClick={() => setMobileFiltersOpen(true)}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filters
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="lg:hidden"
-            onClick={() => setMobileFiltersOpen(true)}
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            Filters
-          </Button>
-        </div>
+        </section>
 
-        <div ref={gridTopRef} className="scroll-mt-28">
-          <Tabs value={active} onValueChange={handleCategoryChange}>
-            <TabsList className="mb-8 flex-wrap h-auto">
-              <TabsTrigger
-                value={ALL}
-                className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
-              >
-                {ALL}
-              </TabsTrigger>
-              {CATEGORIES.map((cat) => (
+        <div className="container py-8 sm:py-10">
+          <div ref={gridTopRef} className="scroll-mt-28">
+            <Tabs value={active} onValueChange={handleCategoryChange}>
+              <TabsList className="mb-8 h-auto flex-wrap border border-[#C6C8C5] bg-white">
                 <TabsTrigger
-                  key={cat}
-                  value={cat}
-                  className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
+                  value={ALL}
+                  className="data-[state=active]:bg-[#006B3F] data-[state=active]:text-white"
                 >
-                  {CATEGORY_LABELS[cat]}
+                  {ALL}
                 </TabsTrigger>
-              ))}
-            </TabsList>
+                {CATEGORIES.map((cat) => (
+                  <TabsTrigger
+                    key={cat}
+                    value={cat}
+                    className="data-[state=active]:bg-[#006B3F] data-[state=active]:text-white"
+                  >
+                    {CATEGORY_LABELS[cat]}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
 
-            <div className="grid grid-cols-1 gap-10 lg:grid-cols-[220px_1fr]">
-              <aside className="hidden lg:block">
-                <div className="sticky top-28">
-                  <FilterSidebar
-                    filters={filters}
-                    onChange={handleFiltersChange}
-                  />
-                </div>
-              </aside>
+              <div className="grid grid-cols-1 gap-10 lg:grid-cols-[220px_1fr]">
+                <aside className="hidden lg:block">
+                  <div className="sticky top-28 rounded-2xl border border-[#C6C8C5] bg-white p-4 shadow-sm">
+                    <FilterSidebar
+                      filters={filters}
+                      onChange={handleFiltersChange}
+                    />
+                  </div>
+                </aside>
 
-              <TabsContent value={active} className="mt-0">
-                {status === "loading" ? (
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 xl:grid-cols-4">
-                    {Array.from({ length: 8 }).map((_, i) => (
-                      <ProductCardSkeleton key={i} />
-                    ))}
-                  </div>
-                ) : status === "error" ? (
-                  <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-moss-200 py-20 text-center">
-                    <p className="font-display text-lg text-moss-900">
-                      Couldn&apos;t load products
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Please refresh the page or try again shortly.
-                    </p>
-                    <Button
-                      variant="outline"
-                      className="mt-4"
-                      onClick={fetchProducts}
-                    >
-                      Try again
-                    </Button>
-                  </div>
-                ) : filtered.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-moss-200 py-20 text-center">
-                    <p className="font-display text-lg text-moss-900">
-                      {searchInput
-                        ? `No products found for "${searchInput}"`
-                        : "No products match yet"}
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {searchInput
-                        ? "Try a different keyword or clear the search."
-                        : "Try widening your price range or clearing a filter."}
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <p className="mb-4 text-sm text-muted-foreground">
-                      Showing {startIndex + 1}–
-                      {Math.min(startIndex + PAGE_SIZE, filtered.length)} of{" "}
-                      {filtered.length} products
-                    </p>
-
+                <TabsContent value={active} className="mt-0">
+                  {status === "loading" ? (
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 xl:grid-cols-4">
-                      {pageProducts.map((product) => (
-                        <Link
-                          key={product.id}
-                          href={buildProductHref(product)}
-                          className="block"
-                        >
-                          <ProductCard product={product} />
-                        </Link>
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <ProductCardSkeleton key={i} />
                       ))}
                     </div>
+                  ) : status === "error" ? (
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-[#C6C8C5] bg-white py-20 text-center shadow-sm">
+                      <p className="font-display text-lg text-moss-900">
+                        Couldn&apos;t load products
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Please refresh the page or try again shortly.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="mt-4"
+                        onClick={fetchProducts}
+                      >
+                        Try again
+                      </Button>
+                    </div>
+                  ) : filtered.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-[#C6C8C5] bg-white py-20 text-center shadow-sm">
+                      <p className="font-display text-lg text-moss-900">
+                        {searchInput
+                          ? `No products found for "${searchInput}"`
+                          : "No products match yet"}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {searchInput
+                          ? "Try a different keyword or clear the search."
+                          : "Try widening your price range or clearing a filter."}
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="mb-4 text-sm text-[#252927]/70">
+                        Showing {startIndex + 1}–
+                        {Math.min(startIndex + PAGE_SIZE, filtered.length)} of{" "}
+                        {filtered.length} products
+                      </p>
 
-                    <ShopPagination
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={goToPage}
-                    />
-                  </>
-                )}
-              </TabsContent>
-            </div>
-          </Tabs>
+                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 xl:grid-cols-4">
+                        {pageProducts.map((product) => (
+                          <Link
+                            key={product.id}
+                            href={buildProductHref(product)}
+                            className="block"
+                          >
+                            <ProductCard product={product} />
+                          </Link>
+                        ))}
+                      </div>
+
+                      <ShopPagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={goToPage}
+                      />
+                    </>
+                  )}
+                </TabsContent>
+              </div>
+            </Tabs>
+          </div>
+
+          {/* Mobile filter sheet */}
+          <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+            <SheetContent side="left">
+              <SheetHeader>
+                <SheetTitle>Filters</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4">
+                <FilterSidebar
+                  filters={filters}
+                  onChange={handleFiltersChange}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
-
-        {/* Mobile filter sheet */}
-        <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-          <SheetContent side="left">
-            <SheetHeader>
-              <SheetTitle>Filters</SheetTitle>
-            </SheetHeader>
-            <div className="mt-4">
-              <FilterSidebar filters={filters} onChange={handleFiltersChange} />
-            </div>
-          </SheetContent>
-        </Sheet>
       </main>
       <Footer />
     </>

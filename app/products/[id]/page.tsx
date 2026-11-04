@@ -8,7 +8,6 @@ import {
   ChevronLeft,
   Minus,
   Plus,
-  ShoppingBag,
   ShoppingCart,
   PackageX,
   Truck,
@@ -76,29 +75,12 @@ function GreenBackground() {
   );
 }
 
-// Decorative layer for the details card: cart watermark only.
-function DetailsDecor() {
-  return (
-    <>
-      <ShoppingCart
-        aria-hidden
-        className="pointer-events-none absolute -right-3 -top-3 h-28 w-28 text-green-500/20"
-      />
-    </>
-  );
-}
-
-// Loading placeholder mirroring the real two-column layout below: a square
-// image block on the left, and brand/title/rating/price/description/
-// quantity+cart on the right, so there's no layout jump once the product
-// loads in.
 function ProductDetailSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
       <Skeleton className="aspect-square w-full rounded-2xl" />
 
       <div className={DETAILS_CARD_CLASS}>
-        <DetailsDecor />
         <div className="relative flex flex-col">
           <Skeleton className="h-3 w-20" />
           <Skeleton className="mt-2 h-8 w-3/4" />
@@ -199,7 +181,7 @@ export default function ProductDetailPage() {
       <main className="container flex-1 py-8 sm:py-12">
         <button
           onClick={() => router.back()}
-          className="mb-6 inline-flex items-center gap-1 text-sm font-medium text-white/90 hover:text-white"
+          className="mb-6 inline-flex items-center gap-1 rounded-full bg-white/70 px-3 py-1.5 text-sm font-medium text-moss-900 shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-moss-950"
         >
           <ChevronLeft className="h-4 w-4" />
           Back
@@ -250,8 +232,6 @@ export default function ProductDetailPage() {
 
             {/* Details */}
             <div className={DETAILS_CARD_CLASS}>
-              <DetailsDecor />
-
               {/* Content sits above the decorative layer */}
               <div className="relative flex flex-col">
                 <p className="text-xs font-medium uppercase tracking-wide text-moss-500">
@@ -340,7 +320,7 @@ export default function ProductDetailPage() {
                     }
                     variant={canAddToCart ? "default" : "outline"}
                   >
-                    <ShoppingBag className="mr-2 h-4 w-4 shrink-0" />
+                    <ShoppingCart className="mr-2 h-4 w-4 shrink-0" />
                     <span className="truncate">
                       {justAdded
                         ? "Added to cart!"

@@ -5,10 +5,12 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
+  Check,
   ChevronLeft,
   ChevronRight,
-  ShoppingBag,
+  ShoppingCart,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/cart-context";
 import { formatPHP } from "@/lib/utils";
@@ -23,6 +25,25 @@ export function BestSellers() {
   );
   const { addItem } = useCart();
   const scrollerRef = useRef<HTMLDivElement>(null);
+
+  // Tracks which product was just added, so only that card shows "Added!".
+  const [addedId, setAddedId] = useState<Product["id"] | null>(null);
+  const addedTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (addedTimeout.current) clearTimeout(addedTimeout.current);
+    };
+  }, []);
+
+  const handleAdd = (product: Product) => {
+    addItem(product);
+    toast.success(`${product.name} added to cart`);
+
+    setAddedId(product.id);
+    if (addedTimeout.current) clearTimeout(addedTimeout.current);
+    addedTimeout.current = setTimeout(() => setAddedId(null), 1500);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -129,47 +150,66 @@ export function BestSellers() {
           ref={scrollerRef}
           className="mt-8 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {bestSellers.map((product) => (
-            <div
-              key={product.id}
-              className="group flex w-[210px] shrink-0 snap-start flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-moss-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-green-300 sm:w-[240px]"
-            >
-              <div className="relative m-2.5 aspect-square overflow-hidden rounded-2xl bg-moss-50">
-                <Image
-                  src={`${IMAGE_URL}${product.image}`}
-                  alt={product.name}
-                  fill
-                  sizes="260px"
-                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-                />
+          {bestSellers.map((product) => {
+            const justAdded = addedId === product.id;
 
-                <span className="absolute left-2.5 top-2.5 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-semibold text-moss-700 shadow-sm backdrop-blur">
-                  {product.totalOrders ?? 0}+ sold
-                </span>
-              </div>
+            return (
+              <div
+                key={product.id}
+                className="group flex w-[210px] shrink-0 snap-start flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-moss-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-green-300 sm:w-[240px]"
+              >
+                <div className="relative m-2.5 aspect-square overflow-hidden rounded-2xl bg-moss-50">
+                  <Image
+                    src={`${IMAGE_URL}${product.image}`}
+                    alt={product.name}
+                    fill
+                    sizes="260px"
+                    className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                  />
 
-              <div className="flex flex-1 flex-col gap-2 px-4 pb-4 pt-1">
-                <h3 className="line-clamp-2 min-h-[2.5rem] font-display text-sm font-medium leading-snug text-moss-900">
-                  {product.name}
-                </h3>
-
-                <div className="mt-auto flex items-center justify-between pt-1">
-                  <span className="font-display text-lg font-semibold text-moss-900">
-                    {formatPHP(product.price)}
+                  <span className="absolute left-2.5 top-2.5 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-semibold text-moss-700 shadow-sm backdrop-blur">
+                    {product.totalOrders ?? 0}+ sold
                   </span>
-                  <Button
-                    size="icon"
-                    variant="default"
-                    className="h-9 w-9 rounded-full shadow-sm transition-transform hover:scale-105"
-                    aria-label={`Add ${product.name} to cart`}
-                    onClick={() => addItem(product)}
-                  >
-                    <ShoppingBag className="h-4 w-4" />
-                  </Button>
+                </div>
+
+                <div className="flex flex-1 flex-col gap-2 px-4 pb-4 pt-1">
+                  <h3 className="line-clamp-2 min-h-[2.5rem] font-display text-sm font-medium leading-snug text-moss-900">
+                    {product.name}
+                  </h3>
+
+                  <div className="mt-auto flex flex-col gap-2 pt-1">
+                    <span className="font-display text-lg font-semibold text-moss-900">
+                      {formatPHP(product.price)}
+                    </span>
+
+                    <button
+                      type="button"
+                      aria-live="polite"
+                      aria-label={`Add ${product.name} to cart`}
+                      onClick={() => handleAdd(product)}
+                      className={`flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-xs font-semibold text-white shadow-sm transition-all duration-200 active:scale-95 ${
+                        justAdded
+                          ? "scale-105 bg-green-700"
+                          : "bg-green-600 hover:bg-green-700 hover:scale-[1.02]"
+                      }`}
+                    >
+                      {justAdded ? (
+                        <>
+                          <Check className="h-4 w-4 animate-bounce" />
+                          Added!
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingCart className="h-4 w-4" />
+                          Add to Cart
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <Link

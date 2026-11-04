@@ -6,11 +6,13 @@ import Image from "next/image";
 import {
   ArrowRight,
   CalendarClock,
+  Check,
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  ShoppingBag,
+  ShoppingCart,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCart } from "@/context/cart-context";
@@ -93,6 +95,82 @@ function ProductImage({
   );
 }
 
+// Faded + "Sold Out" label layer shown on top of a sold-out product photo.
+function SoldOutOverlay() {
+  return (
+    <span className="absolute inset-0 z-10 flex items-center justify-center bg-white/40">
+      <span className="rounded-full bg-moss-900/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+        Sold Out
+      </span>
+    </span>
+  );
+}
+
+// Shared "Add to Cart" button used by both card types. On mobile it is a
+// round icon-only button; from the sm breakpoint up it fills the space next
+// to the price and shows an "Add to cart" label. After a click the icon briefly
+// turns into a bouncing check (and the label into "Added") so customers can
+// see the item went into the cart.
+function AddToCartButton({
+  product,
+  disabled,
+}: {
+  product: Product;
+  disabled?: boolean;
+}) {
+  const { addItem } = useCart();
+  const [added, setAdded] = React.useState(false);
+  const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Promo card is wrapped in a <Link>, so stop it from navigating.
+    e.preventDefault();
+    e.stopPropagation();
+
+    addItem(product);
+    toast.success(`${product.name} added to cart`);
+
+    setAdded(true);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setAdded(false), 1500);
+  };
+
+  return (
+    <Button
+      type="button"
+      size="icon"
+      disabled={disabled}
+      aria-live="polite"
+      aria-label={
+        disabled ? `${product.name} is sold out` : `Add ${product.name} to cart`
+      }
+      title={disabled ? "Sold out" : "Add to cart"}
+      onClick={handleClick}
+      className={`h-9 w-9 shrink-0 rounded-full shadow-sm transition-all duration-200 active:scale-90 disabled:cursor-not-allowed disabled:bg-moss-200 disabled:text-moss-500 disabled:opacity-100 sm:w-auto sm:min-w-0 sm:flex-1 sm:gap-1.5 sm:px-3 sm:text-xs sm:font-semibold ${
+        added
+          ? "bg-green-700 hover:bg-green-700 max-sm:scale-110"
+          : "max-sm:hover:scale-105"
+      }`}
+    >
+      {added ? (
+        <Check className="h-4 w-4 shrink-0 animate-bounce" />
+      ) : (
+        <ShoppingCart className="h-4 w-4 shrink-0" />
+      )}
+      {/* Label: hidden on mobile, visible on desktop */}
+      <span className="hidden whitespace-nowrap sm:inline">
+        {disabled ? "Sold out" : added ? "Added" : "Add to cart"}
+      </span>
+    </Button>
+  );
+}
+
 function startOfToday(): Date {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -109,7 +187,7 @@ function isUpcoming(product: PromoProduct): boolean {
 
 function PromoCard({ product }: { product: PromoProduct }) {
   const upcoming = isUpcoming(product);
-  const { addItem } = useCart();
+  const soldOut = !product.inStock || product.stock <= 0;
   const [isSm, setIsSm] = React.useState(false);
 
   React.useEffect(() => {
@@ -140,15 +218,18 @@ function PromoCard({ product }: { product: PromoProduct }) {
         <ProductImage
           src={product.image}
           alt={product.name}
-          className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+          className={`object-cover transition-transform duration-500 ease-out group-hover:scale-105 ${
+            soldOut ? "opacity-40 grayscale" : ""
+          }`}
         />
-        {discountPct !== null && (
-          <span className="absolute left-2.5 top-2.5 rounded-full bg-yellow-300 px-2.5 py-1 text-[10px] font-bold text-moss-950 shadow-sm">
+        {soldOut && <SoldOutOverlay />}
+        {discountPct !== null && !soldOut && (
+          <span className="absolute left-2.5 top-2.5 z-20 rounded-full bg-yellow-300 px-2.5 py-1 text-[10px] font-bold text-moss-950 shadow-sm">
             -{discountPct}%
           </span>
         )}
         <span
-          className={`absolute right-2.5 top-2.5 inline-flex h-6 w-6 items-center justify-center rounded-full text-white shadow-sm ${
+          className={`absolute right-2.5 top-2.5 z-20 inline-flex h-6 w-6 items-center justify-center rounded-full text-white shadow-sm ${
             upcoming ? "bg-amber-500" : "bg-green-600"
           }`}
           title={upcoming ? "Coming soon" : "On promo"}
@@ -168,8 +249,10 @@ function PromoCard({ product }: { product: PromoProduct }) {
         <h3 className="line-clamp-2 min-h-[2.5rem] font-display text-sm font-medium leading-snug text-moss-900">
           {product.name}
         </h3>
-        <div className="mt-auto flex items-center justify-between gap-1.5 pt-1">
-          <div className="flex items-baseline gap-1.5">
+        {/* One row: price on the left, button on the right
+            (icon only on mobile, "Add to cart" label on desktop). */}
+        <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+          <div className="flex shrink-0 items-baseline gap-1.5 sm:flex-col-reverse sm:items-start sm:gap-0 sm:leading-tight">
             <span className="font-display text-lg font-semibold text-moss-900">
               {formatPHP(product.price)}
             </span>
@@ -179,22 +262,12 @@ function PromoCard({ product }: { product: PromoProduct }) {
               </span>
             )}
           </div>
-          <Button
-            size="icon"
-            variant="default"
-            className="h-9 w-9 shrink-0 rounded-full shadow-sm transition-transform hover:scale-105"
-            aria-label={`Add ${product.name} to cart`}
-            disabled={!product.inStock}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              // PromoProduct and Product share the fields addItem relies on
-              // (id, name, price, image, etc.) but aren't the same type.
-              addItem(product as unknown as Product);
-            }}
-          >
-            <ShoppingBag className="h-4 w-4" />
-          </Button>
+          {/* PromoProduct and Product share the fields addItem relies on
+              (id, name, price, image, etc.) but aren't the same type. */}
+          <AddToCartButton
+            product={product as unknown as Product}
+            disabled={soldOut}
+          />
         </div>
       </div>
     </Link>
@@ -202,7 +275,7 @@ function PromoCard({ product }: { product: PromoProduct }) {
 }
 
 function BestSellerCard({ product }: { product: Product }) {
-  const { addItem } = useCart();
+  const soldOut = !product.inStock || product.stock <= 0;
 
   return (
     <div className="group flex w-[210px] shrink-0 snap-start flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-moss-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-green-300 sm:w-[240px]">
@@ -210,9 +283,12 @@ function BestSellerCard({ product }: { product: Product }) {
         <ProductImage
           src={product.image}
           alt={product.name}
-          className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+          className={`object-cover transition-transform duration-500 ease-out group-hover:scale-105 ${
+            soldOut ? "opacity-40 grayscale" : ""
+          }`}
         />
-        <span className="absolute left-2.5 top-2.5 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-semibold text-moss-700 shadow-sm backdrop-blur">
+        {soldOut && <SoldOutOverlay />}
+        <span className="absolute left-2.5 top-2.5 z-20 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-semibold text-moss-700 shadow-sm backdrop-blur">
           {product.totalOrders ?? 0}+ sold
         </span>
       </div>
@@ -222,19 +298,13 @@ function BestSellerCard({ product }: { product: Product }) {
           {product.name}
         </h3>
 
-        <div className="mt-auto flex items-center justify-between pt-1">
-          <span className="font-display text-lg font-semibold text-moss-900">
+        {/* One row: price on the left, button on the right
+            (icon only on mobile, "Add to cart" label on desktop). */}
+        <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+          <span className="shrink-0 font-display text-lg font-semibold text-moss-900">
             {formatPHP(product.price)}
           </span>
-          <Button
-            size="icon"
-            variant="default"
-            className="h-9 w-9 rounded-full shadow-sm transition-transform hover:scale-105"
-            aria-label={`Add ${product.name} to cart`}
-            onClick={() => addItem(product)}
-          >
-            <ShoppingBag className="h-4 w-4" />
-          </Button>
+          <AddToCartButton product={product} disabled={soldOut} />
         </div>
       </div>
     </div>
@@ -359,17 +429,9 @@ export function FeaturedProducts() {
   const seeAllHref = isPromos ? "/promos" : "#shop";
 
   return (
-    <section className="relative w-full overflow-hidden">
-      {/* Background layer */}
-      <div className="absolute inset-0 -z-10">
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-100"
-          style={{ backgroundImage: "url('/featured.png')" }}
-        />
-        {/* Readability overlay — lower the /NN value to let more image show through */}
-        <div className="absolute inset-0 bg-background/30" />
-      </div>
-
+    // Plain Quanta Green (#00A552) from the brand palette — no image,
+    // no decorative elements.
+    <section className="relative w-full overflow-hidden bg-[#00A552]">
       <div className="container py-6 sm:py-8">
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3 sm:mb-4">
           <div>
@@ -400,7 +462,7 @@ export function FeaturedProducts() {
                 Customer favorites
               </button>
             </div>
-            <h2 className="mt-1.5 font-display text-xl font-medium text-moss-900 sm:text-2xl">
+            <h2 className="mt-1.5 font-display text-xl font-medium text-white sm:text-2xl">
               {isPromos ? "Special Promos" : "Best sellers"}
             </h2>
           </div>
@@ -408,7 +470,7 @@ export function FeaturedProducts() {
           <div className="flex flex-shrink-0 items-center gap-2">
             <Link
               href={seeAllHref}
-              className="group flex items-center gap-1 text-sm font-medium text-forest hover:text-moss-900"
+              className="group flex items-center gap-1 text-sm font-medium text-white hover:text-white/80"
             >
               {isPromos ? "See all" : "View all"}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -418,7 +480,7 @@ export function FeaturedProducts() {
                 type="button"
                 onClick={() => scrollByAmount(-1)}
                 aria-label="Scroll left"
-                className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-green-500 text-green-600 transition-colors hover:bg-green-500 hover:text-white focus-ring"
+                className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white text-white transition-colors hover:bg-white hover:text-green-600 focus-ring"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -426,7 +488,7 @@ export function FeaturedProducts() {
                 type="button"
                 onClick={() => scrollByAmount(1)}
                 aria-label="Scroll right"
-                className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-green-500 text-green-600 transition-colors hover:bg-green-500 hover:text-white focus-ring"
+                className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white text-white transition-colors hover:bg-white hover:text-green-600 focus-ring"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
