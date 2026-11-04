@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Loader2,
   GripVertical,
+  X,
 } from "lucide-react";
 
 import { AdminSidebar } from "@/components/AdminSidebar";
@@ -53,6 +54,9 @@ import {
 //   3rd tile -> small, ~ 400 x 250  (8:5)
 //   4th tile -> small, ~ 400 x 250  (8:5)
 //
+// Each tile can hold several images. All images in a tile share the tile's
+// slot, so they should all use the slot's recommended size.
+//
 // The storefront crops each image to fill its tile (object-cover), so an
 // image only shows fully when its shape (aspect ratio) matches the tile.
 // Recommended sizes are 2x the tile size for sharp display.
@@ -73,6 +77,10 @@ function slotForRank(rank: number): Slot {
   return SLOTS[rank] ?? FALLBACK_SLOT;
 }
 
+// Per-tile image limits (keep in sync with CategoryController).
+const MAX_IMAGES = 10;
+const MAX_FILE_MB = 5;
+
 type ImageSize = { w: number; h: number };
 
 // Whether an image's shape matches the slot (within 3%).
@@ -82,32 +90,45 @@ function fitsSlot(size: ImageSize, slot: Slot) {
   return Math.abs(ratio / slotRatio - 1) <= 0.03;
 }
 
-// Category shape as returned by the Laravel API (see
-// CategoryController + Category::getImageUrlAttribute). The model only
-// stores `image` (relative path under /public) and `sort_order` — the
-// API appends `image_url` as the ready-to-use absolute URL.
-type AdminCategory = {
+// Shapes returned by the Laravel API (Category::$with = ['images'],
+// CategoryImage::$appends = ['image_url']).
+type CategoryImage = {
   id: number;
   image: string; // e.g. "categories/abc123.png"
   image_url: string; // e.g. "https://api.yoursite.com/categories/abc123.png"
+};
+
+type AdminCategory = {
+  id: number;
   sort_order: number;
+  images: CategoryImage[];
   created_at?: string;
   updated_at?: string;
 };
 
+// A newly picked file waiting to be uploaded.
+type PendingImage = {
+  key: string;
+  file: File;
+  preview: string; // object URL
+  size: ImageSize | null;
+};
+
 type CategoryFormState = {
   id: number | null;
-  imageFile: File | null;
-  imagePreview: string; // existing image_url or object URL preview
-  imageSize: ImageSize | null;
+  existing: CategoryImage[]; // edit mode: images already saved on the tile
+  existingSizes: Record<number, ImageSize | null>;
+  removedIds: number[]; // existing images marked for deletion
+  newImages: PendingImage[]; // files to upload
   sortOrder: string;
 };
 
 const EMPTY_FORM: CategoryFormState = {
   id: null,
-  imageFile: null,
-  imagePreview: "",
-  imageSize: null,
+  existing: [],
+  existingSizes: {},
+  removedIds: [],
+  newImages: [],
   sortOrder: "0",
 };
 
@@ -119,6 +140,10 @@ function readImageSize(src: string): Promise<ImageSize | null> {
     img.onerror = () => resolve(null);
     img.src = src;
   });
+}
+
+function revokePreviews(images: PendingImage[]) {
+  images.forEach((img) => URL.revokeObjectURL(img.preview));
 }
 
 // Status line: the image's size, and whether it fits the tile.
@@ -139,6 +164,30 @@ function FitNote({ size, slot }: { size: ImageSize | null; slot: Slot }) {
   );
 }
 
+// Thumbnail used in the table / card list: first image + "+N" badge.
+function TileThumb({ category }: { category: AdminCategory }) {
+  const first = category.images[0];
+  const extra = category.images.length - 1;
+  return (
+    <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-moss-100">
+      {first && (
+        <Image
+          src={first.image_url}
+          alt={`Category tile #${category.id}`}
+          fill
+          className="object-contain"
+          sizes="80px"
+        />
+      )}
+      {extra > 0 && (
+        <span className="absolute bottom-0.5 right-0.5 rounded-full bg-moss-900/80 px-1.5 py-0.5 text-[10px] font-medium leading-none text-white">
+          +{extra}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -153,7 +202,9 @@ export default function AdminCategoriesPage() {
 
   // view dialog
   const [viewCategory, setViewCategory] = useState<AdminCategory | null>(null);
-  const [viewSize, setViewSize] = useState<ImageSize | null>(null);
+  const [viewSizes, setViewSizes] = useState<Record<number, ImageSize | null>>(
+    {},
+  );
 
   // delete confirmation
   const [deleteCategory, setDeleteCategory] = useState<AdminCategory | null>(
@@ -171,13 +222,18 @@ export default function AdminCategoriesPage() {
 
       // API might return a raw array, or a wrapped shape like
       // { categories: [...] } / { data: [...] } — normalize either way.
-      const list: AdminCategory[] = Array.isArray(data)
+      const raw: AdminCategory[] = Array.isArray(data)
         ? data
         : Array.isArray(data?.categories)
           ? data.categories
           : Array.isArray(data?.data)
             ? data.data
             : [];
+
+      const list = raw.map((c) => ({
+        ...c,
+        images: Array.isArray(c.images) ? c.images : [],
+      }));
 
       // Server already orders by sort_order, but sort defensively in case
       // a wrapped/unsorted shape comes back.
@@ -195,15 +251,17 @@ export default function AdminCategoriesPage() {
     fetchCategories();
   }, []);
 
-  // Read the stored image's pixel size whenever the view dialog opens.
+  // Read every stored image's pixel size whenever the view dialog opens.
   useEffect(() => {
     if (!viewCategory) {
-      setViewSize(null);
+      setViewSizes({});
       return;
     }
     let cancelled = false;
-    readImageSize(viewCategory.image_url).then((size) => {
-      if (!cancelled) setViewSize(size);
+    viewCategory.images.forEach((img) => {
+      readImageSize(img.image_url).then((size) => {
+        if (!cancelled) setViewSizes((prev) => ({ ...prev, [img.id]: size }));
+      });
     });
     return () => {
       cancelled = true;
@@ -251,7 +309,19 @@ export default function AdminCategoriesPage() {
     return slotForRank(rank);
   }, [form.sortOrder, form.id, sorted]);
 
+  const keptExisting = form.existing.filter(
+    (img) => !form.removedIds.includes(img.id),
+  );
+  const totalImages = keptExisting.length + form.newImages.length;
+
+  function closeForm() {
+    revokePreviews(form.newImages);
+    setForm(EMPTY_FORM);
+    setIsFormOpen(false);
+  }
+
   function openAddDialog() {
+    revokePreviews(form.newImages);
     setFormMode("add");
     // Default the new tile to sort to the end of the list.
     const nextOrder =
@@ -263,47 +333,104 @@ export default function AdminCategoriesPage() {
   }
 
   function openEditDialog(category: AdminCategory) {
+    revokePreviews(form.newImages);
     setFormMode("edit");
     setForm({
       id: category.id,
-      imageFile: null,
-      imagePreview: category.image_url,
-      imageSize: null,
+      existing: category.images,
+      existingSizes: {},
+      removedIds: [],
+      newImages: [],
       sortOrder: String(category.sort_order),
     });
     setIsFormOpen(true);
 
-    // Load the current image's size so it's shown right away.
-    readImageSize(category.image_url).then((size) =>
-      setForm((prev) =>
-        prev.id === category.id && !prev.imageFile
-          ? { ...prev, imageSize: size }
-          : prev,
-      ),
-    );
+    // Load each current image's size so it's shown right away.
+    category.images.forEach((img) => {
+      readImageSize(img.image_url).then((size) =>
+        setForm((prev) =>
+          prev.id === category.id
+            ? {
+                ...prev,
+                existingSizes: { ...prev.existingSizes, [img.id]: size },
+              }
+            : prev,
+        ),
+      );
+    });
   }
 
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const preview = URL.createObjectURL(file);
+    const files = Array.from(e.target.files ?? []);
+    // Reset so picking the same file again still fires onChange.
+    e.target.value = "";
+    if (files.length === 0) return;
+
+    const limit = MAX_FILE_MB * 1024 * 1024;
+    const tooBig = files.filter((f) => f.size > limit);
+    let accepted = files.filter((f) => f.size <= limit);
+    const room = MAX_IMAGES - totalImages;
+
+    const messages: string[] = [];
+    if (tooBig.length > 0) {
+      messages.push(
+        `Skipped (over ${MAX_FILE_MB} MB): ${tooBig.map((f) => f.name).join(", ")}`,
+      );
+    }
+    if (accepted.length > room) {
+      accepted = accepted.slice(0, Math.max(0, room));
+      messages.push(`A tile can hold at most ${MAX_IMAGES} images.`);
+    }
+    if (messages.length > 0) alert(messages.join("\n"));
+    if (accepted.length === 0) return;
+
+    const stamp = Date.now();
+    const pendings: PendingImage[] = accepted.map((file, i) => ({
+      key: `${file.name}-${file.lastModified}-${stamp}-${i}`,
+      file,
+      preview: URL.createObjectURL(file),
+      size: null,
+    }));
+
     setForm((prev) => ({
       ...prev,
-      imageFile: file,
-      imagePreview: preview,
-      imageSize: null,
+      newImages: [...prev.newImages, ...pendings],
     }));
-    const size = await readImageSize(preview);
-    setForm((prev) =>
-      prev.imagePreview === preview ? { ...prev, imageSize: size } : prev,
+
+    // Read each image's size, then patch it in by key.
+    await Promise.all(
+      pendings.map(async (p) => {
+        const size = await readImageSize(p.preview);
+        setForm((prev) => ({
+          ...prev,
+          newImages: prev.newImages.map((img) =>
+            img.key === p.key ? { ...img, size } : img,
+          ),
+        }));
+      }),
     );
+  }
+
+  function removePendingImage(key: string) {
+    setForm((prev) => {
+      const target = prev.newImages.find((p) => p.key === key);
+      if (target) URL.revokeObjectURL(target.preview);
+      return {
+        ...prev,
+        newImages: prev.newImages.filter((p) => p.key !== key),
+      };
+    });
+  }
+
+  function removeExistingImage(id: number) {
+    setForm((prev) => ({ ...prev, removedIds: [...prev.removedIds, id] }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (formMode === "add" && !form.imageFile) {
-      alert("Please upload an image.");
+    if (totalImages < 1) {
+      alert("A tile needs at least one image.");
       return;
     }
 
@@ -311,7 +438,10 @@ export default function AdminCategoriesPage() {
 
     try {
       const body = new FormData();
-      if (form.imageFile) body.append("image", form.imageFile);
+      form.newImages.forEach((img) => body.append("images[]", img.file));
+      form.removedIds.forEach((id) =>
+        body.append("remove_image_ids[]", String(id)),
+      );
       body.append("sort_order", form.sortOrder || "0");
 
       const url =
@@ -321,9 +451,18 @@ export default function AdminCategoriesPage() {
       // takes updates over POST too, since PHP can't parse multipart
       // bodies on native PUT/PATCH requests.
       const res = await fetch(url, { method: "POST", body });
-      if (!res.ok) throw new Error("Failed to save category");
+      if (!res.ok) {
+        let message = "Failed to save category";
+        try {
+          const data = await res.json();
+          if (data?.message) message = data.message;
+        } catch {
+          // keep default message
+        }
+        throw new Error(message);
+      }
 
-      setIsFormOpen(false);
+      closeForm();
       await fetchCategories();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to save category");
@@ -362,7 +501,8 @@ export default function AdminCategoriesPage() {
             <p className="text-sm text-muted-foreground">
               Shown in "Shop by category" on the storefront. Position decides
               the tile: 1st = tall, 2nd = wide, 3rd and 4th = small. Only the
-              first 4 are displayed.
+              first 4 are displayed. Each tile can hold up to {MAX_IMAGES}{" "}
+              images.
             </p>
           </div>
           <Button onClick={openAddDialog} className="gap-1.5">
@@ -413,23 +553,16 @@ export default function AdminCategoriesPage() {
                         className="border-b border-moss-100 last:border-0 hover:bg-moss-50/70"
                       >
                         <TableCell>
-                          {/* object-contain: whole image visible, no crop */}
-                          <div className="relative h-14 w-20 overflow-hidden rounded-lg bg-moss-100">
-                            <Image
-                              src={category.image_url}
-                              alt={`Category tile #${category.id}`}
-                              fill
-                              className="object-contain"
-                              sizes="80px"
-                            />
-                          </div>
+                          <TileThumb category={category} />
                         </TableCell>
                         <TableCell>
                           <p className="text-sm font-medium text-moss-900">
                             {slot.label}
                           </p>
                           <p className="text-[11px] text-muted-foreground">
-                            Recommended {slot.w} × {slot.h} px
+                            {category.images.length}{" "}
+                            {category.images.length === 1 ? "image" : "images"}{" "}
+                            · Recommended {slot.w} × {slot.h} px each
                           </p>
                         </TableCell>
                         <TableCell>
@@ -482,15 +615,7 @@ export default function AdminCategoriesPage() {
                 const slot = slotForCategory(category);
                 return (
                   <div key={category.id} className="flex gap-3 px-4 py-3">
-                    <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-moss-100">
-                      <Image
-                        src={category.image_url}
-                        alt={`Category tile #${category.id}`}
-                        fill
-                        className="object-contain"
-                        sizes="80px"
-                      />
-                    </div>
+                    <TileThumb category={category} />
 
                     <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
                       <div className="min-w-0">
@@ -499,7 +624,8 @@ export default function AdminCategoriesPage() {
                         </p>
                         <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                           <GripVertical className="h-3 w-3 text-moss-300" />
-                          Sort {category.sort_order}
+                          Sort {category.sort_order} · {category.images.length}{" "}
+                          {category.images.length === 1 ? "image" : "images"}
                         </span>
                       </div>
                       <div className="flex shrink-0 items-center gap-0.5">
@@ -594,7 +720,10 @@ export default function AdminCategoriesPage() {
       </main>
 
       {/* Add / Edit dialog */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+      <Dialog
+        open={isFormOpen}
+        onOpenChange={(open) => (open ? setIsFormOpen(true) : closeForm())}
+      >
         <DialogContent className="flex max-h-[88vh] max-w-md flex-col gap-0 overflow-hidden p-0">
           <form onSubmit={handleSubmit} className="flex max-h-[88vh] flex-col">
             <DialogHeader className="border-b border-moss-100 px-6 py-4">
@@ -605,8 +734,8 @@ export default function AdminCategoriesPage() {
               </DialogTitle>
               <DialogDescription>
                 {formMode === "add"
-                  ? "Upload an image and set where it appears."
-                  : "Replace the image or change its position."}
+                  ? "Upload one or more images for this tile and set where it appears."
+                  : "Add or remove images, or change the tile's position."}
               </DialogDescription>
             </DialogHeader>
 
@@ -617,38 +746,103 @@ export default function AdminCategoriesPage() {
                   {formSlot.label}
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Upload size:{" "}
+                  Upload size for every image:{" "}
                   <span className="font-medium text-moss-900">
                     {formSlot.w} × {formSlot.h} px
                   </span>{" "}
-                  (JPG, PNG, or WEBP)
+                  (JPG, PNG, or WEBP, max {MAX_FILE_MB} MB each)
                 </p>
               </div>
 
-              {/* Image upload */}
+              {/* Images */}
               <div className="grid gap-2">
-                <Label>Image</Label>
-                {/* Full image, uncropped (natural aspect ratio). */}
-                <div className="flex min-h-[140px] items-center justify-center overflow-hidden rounded-xl border border-dashed border-moss-200 bg-moss-50">
-                  {form.imagePreview ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={form.imagePreview}
-                      alt="Preview"
-                      className="max-h-72 w-full object-contain"
-                    />
-                  ) : (
-                    <ImagePlus className="h-8 w-8 text-moss-300" />
-                  )}
-                </div>
+                <Label>
+                  Images ({totalImages} / {MAX_IMAGES})
+                </Label>
 
-                <FitNote size={form.imageSize} slot={formSlot} />
+                {totalImages === 0 ? (
+                  <div className="flex min-h-[140px] items-center justify-center rounded-xl border border-dashed border-moss-200 bg-moss-50">
+                    <ImagePlus className="h-8 w-8 text-moss-300" />
+                  </div>
+                ) : (
+                  <div className="grid gap-2">
+                    {/* Saved images (edit mode) */}
+                    {keptExisting.map((img) => (
+                      <div
+                        key={`existing-${img.id}`}
+                        className="flex gap-3 rounded-xl border border-moss-100 bg-moss-50/60 p-2.5"
+                      >
+                        <div className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-moss-100">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={img.image_url}
+                            alt="Saved image"
+                            className="h-full w-full object-contain"
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-moss-800">
+                            Saved image
+                          </p>
+                          <FitNote
+                            size={form.existingSizes[img.id] ?? null}
+                            slot={formSlot}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6 shrink-0 text-red-500 hover:bg-red-50 hover:text-red-600"
+                          onClick={() => removeExistingImage(img.id)}
+                          aria-label="Remove saved image"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+
+                    {/* Newly picked images */}
+                    {form.newImages.map((img) => (
+                      <div
+                        key={img.key}
+                        className="flex gap-3 rounded-xl border border-moss-100 bg-moss-50/60 p-2.5"
+                      >
+                        <div className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-moss-100">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={img.preview}
+                            alt={img.file.name}
+                            className="h-full w-full object-contain"
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-semibold text-moss-800">
+                            {img.file.name}
+                          </p>
+                          <FitNote size={img.size} slot={formSlot} />
+                        </div>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6 shrink-0 text-red-500 hover:bg-red-50 hover:text-red-600"
+                          onClick={() => removePendingImage(img.key)}
+                          aria-label={`Remove ${img.file.name}`}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <div>
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
                     className="hidden"
                     onChange={handleImageChange}
                   />
@@ -657,12 +851,15 @@ export default function AdminCategoriesPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => fileInputRef.current?.click()}
+                    disabled={totalImages >= MAX_IMAGES}
                   >
-                    Upload image
+                    {totalImages > 0 ? "Add more images" : "Upload images"}
                   </Button>
-                  {formMode === "edit" && (
+                  {formMode === "edit" && form.removedIds.length > 0 && (
                     <p className="mt-1 text-[11px] text-muted-foreground">
-                      Leave empty to keep the current image.
+                      {form.removedIds.length} image
+                      {form.removedIds.length === 1 ? "" : "s"} will be deleted
+                      when you save.
                     </p>
                   )}
                 </div>
@@ -691,7 +888,7 @@ export default function AdminCategoriesPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsFormOpen(false)}
+                onClick={closeForm}
                 disabled={isSubmitting}
               >
                 Cancel
@@ -712,27 +909,38 @@ export default function AdminCategoriesPage() {
         open={!!viewCategory}
         onOpenChange={(open) => !open && setViewCategory(null)}
       >
-        <DialogContent className="max-w-lg">
+        <DialogContent className="flex max-h-[88vh] max-w-lg flex-col overflow-hidden">
           {viewCategory && (
             <>
               <DialogHeader>
                 <DialogTitle>Category Tile #{viewCategory.id}</DialogTitle>
                 <DialogDescription>
                   {slotForCategory(viewCategory).label} · Sort order{" "}
-                  {viewCategory.sort_order}
+                  {viewCategory.sort_order} · {viewCategory.images.length}{" "}
+                  {viewCategory.images.length === 1 ? "image" : "images"}
                 </DialogDescription>
               </DialogHeader>
-              {/* Natural aspect ratio, capped by viewport height — the full
-                  image is shown, never cropped. */}
-              <div className="flex items-center justify-center overflow-hidden rounded-xl bg-moss-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={viewCategory.image_url}
-                  alt={`Category tile #${viewCategory.id}`}
-                  className="max-h-[60vh] w-full object-contain"
-                />
+
+              {/* Every image at its natural aspect ratio — never cropped. */}
+              <div className="grid gap-3 overflow-y-auto">
+                {viewCategory.images.map((img, i) => (
+                  <div key={img.id} className="grid gap-1.5">
+                    <div className="flex items-center justify-center overflow-hidden rounded-xl bg-moss-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={img.image_url}
+                        alt={`Category tile #${viewCategory.id} image ${i + 1}`}
+                        className="max-h-[40vh] w-full object-contain"
+                      />
+                    </div>
+                    <FitNote
+                      size={viewSizes[img.id] ?? null}
+                      slot={slotForCategory(viewCategory)}
+                    />
+                  </div>
+                ))}
               </div>
-              <FitNote size={viewSize} slot={slotForCategory(viewCategory)} />
+
               <DialogFooter>
                 <Button variant="outline" onClick={() => setViewCategory(null)}>
                   Close
@@ -765,7 +973,9 @@ export default function AdminCategoriesPage() {
               <span className="font-medium text-moss-900">
                 #{deleteCategory?.id}
               </span>{" "}
-              from the "Shop by category" section on the storefront. This action
+              and its {deleteCategory?.images.length ?? 0}{" "}
+              {deleteCategory?.images.length === 1 ? "image" : "images"} from
+              the "Shop by category" section on the storefront. This action
               cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

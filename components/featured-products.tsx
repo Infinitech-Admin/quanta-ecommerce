@@ -65,6 +65,21 @@ function resolveImageUrl(path: string | null | undefined): string {
   return `${IMAGE_BASE_URL}${path}`;
 }
 
+// Only the "Bundle" tag is shown as a badge (case-insensitive).
+function isBundle(tag: string | null | undefined): boolean {
+  return !!tag && tag.trim().toLowerCase() === "bundle";
+}
+
+// "Bundle" badge, pinned to the bottom-left of the product photo so it
+// never collides with the discount / promo / sold badges at the top.
+function BundleBadge() {
+  return (
+    <span className="absolute bottom-2.5 left-2.5 z-20 rounded-full bg-[#006B3F] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow-sm">
+      Bundle
+    </span>
+  );
+}
+
 // Shows the product image, and falls back to the default placeholder when
 // there's no image path OR when the image fails to load (404, broken URL).
 function ProductImage({
@@ -240,6 +255,7 @@ function PromoCard({ product }: { product: PromoProduct }) {
             <Sparkles className="h-3.5 w-3.5" />
           )}
         </span>
+        {isBundle(product.tag) && !soldOut && <BundleBadge />}
       </div>
 
       <div className="flex flex-1 flex-col gap-2 px-4 pb-4 pt-1">
@@ -291,6 +307,7 @@ function BestSellerCard({ product }: { product: Product }) {
         <span className="absolute left-2.5 top-2.5 z-20 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-semibold text-moss-700 shadow-sm backdrop-blur">
           {product.totalOrders ?? 0}+ sold
         </span>
+        {isBundle(product.tag) && !soldOut && <BundleBadge />}
       </div>
 
       <div className="flex flex-1 flex-col gap-2 px-4 pb-4 pt-1">
