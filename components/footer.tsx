@@ -38,17 +38,19 @@ function TikTokIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-// Real logo image — place your logo file at /public/q-logo.png in your
-// Next.js project. The image already contains the "QUANTA PAPER
-// CORPORATION" wordmark, so no text is rendered alongside it here.
+// Real logo image — place the transparent-background logo file at
+// /public/q-logo.png in your Next.js project. The image already contains
+// the "QUANTA PAPER CORPORATION" wordmark, so no text is rendered
+// alongside it here. Height is kept small so the logo stays proportionate
+// to the description text below it.
 function QuantaBadge() {
   return (
     <Image
-      src="/q-logo.png"
+      src="/q-logo-no-bg.png"
       alt="Quanta Paper Corporation"
-      width={300}
-      height={99}
-      className="h-20 w-auto max-w-full lg:h-24"
+      width={480}
+      height={100}
+      className="h-auto w-full max-w-sm"
       priority
     />
   );

@@ -8,7 +8,7 @@ import {
   ArrowLeft,
   CalendarClock,
   Clock,
-  ShoppingBag,
+  ShoppingCart,
   Sparkles,
   Star,
 } from "lucide-react";
@@ -293,7 +293,7 @@ export default function PromoDetailPage() {
                   }
                   onClick={() => addItem(product as unknown as Product)}
                 >
-                  <ShoppingBag className="h-4 w-4" />
+                  <ShoppingCart className="h-4 w-4" />
                   {upcoming
                     ? "Not available yet"
                     : !product.inStock

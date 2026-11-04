@@ -8,7 +8,7 @@ import {
   PackageSearch,
   Clock,
   CalendarClock,
-  ShoppingBag,
+  ShoppingCart,
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
@@ -176,7 +176,7 @@ function PromoCard({ product }: { product: PromoProduct }) {
               addItem(product as unknown as Product);
             }}
           >
-            <ShoppingBag className="h-4 w-4" />
+            <ShoppingCart className="h-4 w-4" />
           </Button>
         </div>
 

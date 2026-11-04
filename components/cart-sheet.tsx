@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -44,7 +44,7 @@ export function CartSheet({
       <SheetContent className="flex flex-col">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            <ShoppingBag className="h-5 w-5" />
+            <ShoppingCart className="h-5 w-5" />
             Your cart{" "}
             {count > 0 && <span className="text-moss-600">({count})</span>}
           </SheetTitle>
@@ -53,7 +53,7 @@ export function CartSheet({
         {lines.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-moss-50">
-              <ShoppingBag className="h-7 w-7 text-moss-400" />
+              <ShoppingCart className="h-7 w-7 text-moss-400" />
             </div>
             <p className="font-display text-lg text-moss-900">
               Your cart is empty

@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Search,
-  ShoppingBag,
+  ShoppingCart,
   User,
   Menu,
   X,
@@ -222,15 +222,15 @@ export function Navbar() {
           </button>
 
           <Link href="/" className="group flex shrink-0 items-center">
-            {/* Square logo — sized with equal height/width so it never
-                stretches, and scaled up across breakpoints. */}
+            {/* Q-Store logo is wide (not square), so we fix the height and let
+      the width scale automatically to keep the aspect ratio. */}
             <Image
-              src="/quanta-logo-square.png"
-              alt="Quanta Paper Corporation"
-              width={240}
-              height={240}
+              src="/q-store-logo-no-bg.png"
+              alt="Q-Store"
+              width={400}
+              height={100}
               priority
-              className="h-14 w-14 object-contain transition-transform duration-300 ease-out group-hover:scale-105 sm:h-[72px] sm:w-[72px] lg:h-20 lg:w-20"
+              className="h-10 w-auto object-contain transition-transform duration-300 ease-out group-hover:scale-105 sm:h-12 lg:h-14"
             />
           </Link>
 
@@ -257,7 +257,7 @@ export function Navbar() {
               className="hidden items-center gap-1.5 rounded-full border-moss-300 text-moss-700 hover:bg-moss-50 sm:flex"
             >
               <Link href="/shop">
-                <ShoppingBag className="h-4 w-4" />
+                <ShoppingCart  className="h-4 w-4" />
                 Shop
               </Link>
             </Button>
@@ -385,7 +385,7 @@ export function Navbar() {
               aria-label="Open cart"
               onClick={() => setCartOpen(true)}
             >
-              <ShoppingBag />
+              <ShoppingCart  />
               {count > 0 && (
                 <span className="absolute right-0 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-moss-700 text-[11px] font-bold text-white">
                   {count}

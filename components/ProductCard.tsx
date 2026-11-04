@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Product, useCart } from "@/context/CartContext";
+import { ShoppingCart, Check } from "lucide-react";
+import { toast } from "sonner";
 
 const PLACEHOLDER_IMAGE = "/products/placeholder.jpg";
 
@@ -11,6 +13,10 @@ export default function ProductCard({ product }: { product: Product }) {
 
   const [imgSrc, setImgSrc] = useState(product.image || PLACEHOLDER_IMAGE);
   const imgRef = useRef<HTMLImageElement>(null);
+
+  // Shows "Added!" feedback on the button after clicking.
+  const [justAdded, setJustAdded] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset if the product's image changes.
   useEffect(() => {
@@ -29,6 +35,22 @@ export default function ProductCard({ product }: { product: Product }) {
       setImgSrc(PLACEHOLDER_IMAGE);
     }
   }, [imgSrc]);
+
+  // Clear the timer if the card unmounts.
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  const handleAddToCart = () => {
+    addItem(product);
+    toast.success(`${product.name} added to cart`);
+
+    setJustAdded(true);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setJustAdded(false), 1500);
+  };
 
   return (
     <div className="group flex flex-col">
@@ -55,10 +77,24 @@ export default function ProductCard({ product }: { product: Product }) {
           </span>
         </div>
         <button
-          onClick={() => addItem(product)}
-          className="mt-2 self-start text-xs font-medium uppercase tracking-widest2 text-forest underline decoration-transparent underline-offset-4 transition group-hover:decoration-forest focus-ring"
+          type="button"
+          onClick={handleAddToCart}
+          aria-live="polite"
+          className={`mt-3 flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-xs font-medium uppercase tracking-widest2 text-white transition-all duration-200 active:scale-95 focus-ring ${
+            justAdded ? "scale-105 bg-green-700" : "bg-forest hover:opacity-90"
+          }`}
         >
-          Add to cart
+          {justAdded ? (
+            <>
+              <Check className="h-4 w-4 animate-bounce" />
+              Added!
+            </>
+          ) : (
+            <>
+              <ShoppingCart className="h-4 w-4" />
+              Add to cart
+            </>
+          )}
         </button>
       </div>
     </div>

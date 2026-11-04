@@ -8,7 +8,7 @@ import {
   Facebook,
   Search,
   Info,
-  ShoppingBag,
+  ShoppingCart,
   CreditCard,
   Undo2,
 } from "lucide-react";
@@ -60,7 +60,7 @@ const CATEGORIES: FaqCategory[] = [
   {
     id: "ordering",
     label: "Ordering & Delivery",
-    icon: ShoppingBag,
+    icon: ShoppingCart,
     items: [
       {
         id: "minimum-order",
