@@ -243,8 +243,23 @@ export default function PromosPage() {
         cache: "no-store",
       });
       if (!res.ok) throw new Error("Failed to load promo products");
-      const data: PromoProduct[] = await res.json();
-      setProducts(data);
+
+      const json = await res.json();
+
+      // Accept a bare array, or an object wrapping the array.
+      const list: PromoProduct[] = Array.isArray(json)
+        ? json
+        : Array.isArray(json?.products)
+          ? json.products
+          : Array.isArray(json?.data)
+            ? json.data
+            : [];
+
+      if (!Array.isArray(json) && list.length === 0) {
+        console.warn("Unexpected /api/products response shape:", json);
+      }
+
+      setProducts(list);
     } catch {
       setError("We couldn't load the current promos. Please try again.");
     } finally {

@@ -20,22 +20,6 @@ import { formatPHP } from "@/lib/utils";
 import { AuthDialog } from "@/components/auth-dialog";
 import { useCart } from "@/context/cart-context";
 
-function OrdersPageBackground() {
-  return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-background"
-    >
-      <div
-        className="absolute inset-0 bg-cover bg-top bg-no-repeat opacity-90"
-        style={{ backgroundImage: "url('/parcel-background.png')" }}
-      />
-      {/* Fade into the page background so content stays readable */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/30 to-background" />
-    </div>
-  );
-}
-
 type OrderStatus =
   | "pending"
   | "confirmed"
@@ -149,15 +133,15 @@ function OrderTracker({ status }: { status: OrderStatus }) {
               <span
                 className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors sm:h-8 sm:w-8 ${
                   reached
-                    ? "border-forest bg-forest text-paper"
-                    : "border-moss-200 bg-background text-moss-300"
+                    ? "border-[#006B3F] bg-[#006B3F] text-white"
+                    : "border-[#C6C8C5] bg-white text-[#252927]/40"
                 }`}
               >
                 <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
               </span>
               <span
                 className={`hidden text-center text-[10px] font-medium leading-tight sm:block sm:text-[11px] ${
-                  reached ? "text-moss-900" : "text-moss-300"
+                  reached ? "text-[#252927]" : "text-[#252927]/40"
                 }`}
               >
                 {step.label}
@@ -166,7 +150,7 @@ function OrderTracker({ status }: { status: OrderStatus }) {
             {i < TRACK_STEPS.length - 1 && (
               <div
                 className={`mx-1 mb-3 h-0.5 min-w-[12px] flex-1 rounded-full transition-colors sm:mx-2 sm:mb-4 ${
-                  i < current ? "bg-forest" : "bg-moss-200"
+                  i < current ? "bg-[#006B3F]" : "bg-[#C6C8C5]"
                 }`}
               />
             )}
@@ -178,12 +162,14 @@ function OrderTracker({ status }: { status: OrderStatus }) {
 }
 
 function StatusBadge({ status }: { status: OrderStatus }) {
+  // Palette-only badge colors. Cancelled keeps the destructive color on
+  // purpose so it still reads as an error state.
   const styles: Record<OrderStatus, string> = {
-    pending: "bg-amber-50 text-amber-700 border-amber-200",
-    confirmed: "bg-moss-50 text-moss-700 border-moss-200",
-    processing: "bg-moss-50 text-moss-700 border-moss-200",
-    shipped: "bg-sky-50 text-sky-700 border-sky-200",
-    delivered: "bg-forest/10 text-forest border-forest/30",
+    pending: "bg-[#C6C8C5]/30 text-[#252927] border-[#C6C8C5]",
+    confirmed: "bg-[#006B3F]/10 text-[#006B3F] border-[#006B3F]/30",
+    processing: "bg-[#006B3F]/10 text-[#006B3F] border-[#006B3F]/30",
+    shipped: "bg-[#00A552]/10 text-[#006B3F] border-[#00A552]/40",
+    delivered: "bg-[#006B3F] text-white border-[#006B3F]",
     cancelled: "bg-destructive/5 text-destructive border-destructive/30",
   };
 
@@ -258,7 +244,7 @@ function OrderCard({ order }: { order: Order }) {
     order.status !== "cancelled";
 
   return (
-    <div className="rounded-2xl border border-moss-100 bg-card shadow-sm">
+    <div className="rounded-2xl border border-[#C6C8C5] bg-white shadow-sm">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -266,38 +252,38 @@ function OrderCard({ order }: { order: Order }) {
       >
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="font-display text-base font-semibold italic text-moss-900">
+            <p className="font-display text-base font-semibold italic text-[#252927]">
               Order #{order.id}
             </p>
             <StatusBadge status={order.status} />
           </div>
-          <p className="mt-0.5 truncate font-mono text-xs text-moss-400">
+          <p className="mt-0.5 truncate font-mono text-xs text-[#252927]/50">
             {date} · {order.items.length}{" "}
             {order.items.length === 1 ? "item" : "items"} ·{" "}
             {PAYMENT_LABELS[order.payment_method]}
           </p>
           {order.tracking_number && (
-            <p className="mt-1 truncate font-mono text-[11px] text-moss-500">
+            <p className="mt-1 truncate font-mono text-[11px] text-[#252927]/60">
               Tracking:{" "}
-              <span className="font-semibold text-moss-700">
+              <span className="font-semibold text-[#252927]">
                 {order.tracking_number}
               </span>
             </p>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
-          <span className="font-mono text-sm font-semibold text-moss-900">
+          <span className="font-mono text-sm font-semibold text-[#252927]">
             {formatPHP(Number(order.total))}
           </span>
           <button
             type="button"
             onClick={buyAgain}
-            className="shrink-0 rounded-full border border-moss-200 px-3 py-1.5 font-mono text-[11px] font-medium text-moss-700 transition-colors hover:border-moss-400 focus-ring"
+            className="shrink-0 rounded-full border border-[#C6C8C5] px-3 py-1.5 font-mono text-[11px] font-medium text-[#006B3F] transition-colors hover:border-[#006B3F] focus-ring"
           >
             {reordered ? "Added!" : "Buy again"}
           </button>
           <ChevronDown
-            className={`h-4 w-4 text-moss-400 transition-transform ${
+            className={`h-4 w-4 text-[#252927]/50 transition-transform ${
               open ? "rotate-180" : ""
             }`}
           />
@@ -305,21 +291,21 @@ function OrderCard({ order }: { order: Order }) {
       </button>
 
       {open && (
-        <div className="border-t border-moss-100 p-4 sm:p-5">
+        <div className="border-t border-[#C6C8C5] p-4 sm:p-5">
           {order.tracking_number && (
-            <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-dashed border-moss-200 bg-moss-pale/40 px-4 py-3">
+            <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-dashed border-[#C6C8C5] bg-[#F8F7F4] px-4 py-3">
               <div className="min-w-0">
                 <p className="text-[11px] font-medium uppercase tracking-widest2 text-moss-500">
                   Tracking number
                 </p>
-                <p className="truncate font-mono text-sm font-semibold text-moss-900">
+                <p className="truncate font-mono text-sm font-semibold text-[#252927]">
                   {order.tracking_number}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={copyTracking}
-                className="shrink-0 rounded-full border border-moss-200 px-3 py-1.5 font-mono text-[11px] font-medium text-moss-700 transition-colors hover:border-moss-400 focus-ring"
+                className="shrink-0 rounded-full border border-[#C6C8C5] bg-white px-3 py-1.5 font-mono text-[11px] font-medium text-[#006B3F] transition-colors hover:border-[#006B3F] focus-ring"
               >
                 {copied ? "Copied!" : "Copy"}
               </button>
@@ -334,13 +320,13 @@ function OrderCard({ order }: { order: Order }) {
 
           {/* Current shipping location, if the admin noted one */}
           {showShippingLocation && (
-            <div className="mt-3 flex items-start gap-2 rounded-xl border border-sky-100 bg-sky-50/60 px-3 py-2.5">
-              <Truck className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
+            <div className="mt-3 flex items-start gap-2 rounded-xl border border-[#C6C8C5] bg-[#F8F7F4] px-3 py-2.5">
+              <Truck className="mt-0.5 h-4 w-4 shrink-0 text-[#006B3F]" />
               <div className="min-w-0">
-                <p className="text-[11px] font-medium uppercase tracking-widest2 text-sky-700">
+                <p className="text-[11px] font-medium uppercase tracking-widest2 text-[#006B3F]">
                   Current location
                 </p>
-                <p className="text-xs text-sky-900">
+                <p className="text-xs text-[#252927]">
                   {order.shipping_location}
                 </p>
               </div>
@@ -351,33 +337,33 @@ function OrderCard({ order }: { order: Order }) {
             {order.items.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between font-mono text-xs text-moss-700"
+                className="flex items-center justify-between font-mono text-xs text-[#252927]/80"
               >
                 <span className="min-w-0 flex-1 truncate pr-2">
                   {item.qty}× {item.name}
                 </span>
-                <span className="shrink-0 text-moss-900">
+                <span className="shrink-0 text-[#252927]">
                   {formatPHP(Number(item.price) * item.qty)}
                 </span>
               </div>
             ))}
           </div>
 
-          <div className="my-4 border-t border-dashed border-moss-200" />
+          <div className="my-4 border-t border-dashed border-[#C6C8C5]" />
 
           <div className="space-y-1 font-mono text-xs">
-            <div className="flex justify-between text-moss-600">
+            <div className="flex justify-between text-[#252927]/70">
               <span>Subtotal</span>
               <span>{formatPHP(Number(order.subtotal))}</span>
             </div>
-            <div className="flex justify-between pt-1 text-sm font-semibold text-moss-900">
+            <div className="flex justify-between pt-1 text-sm font-semibold text-[#252927]">
               <span>Total</span>
               <span>{formatPHP(Number(order.total))}</span>
             </div>
           </div>
 
-          <div className="mt-4 rounded-xl border border-moss-100 bg-moss-pale/40 p-3">
-            <p className="text-xs font-semibold text-moss-800">Shipping to</p>
+          <div className="mt-4 rounded-xl border border-[#C6C8C5] bg-[#F8F7F4] p-3">
+            <p className="text-xs font-semibold text-[#252927]">Shipping to</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {order.first_name} {order.last_name} · {order.address},{" "}
               {order.city} {order.zip}
@@ -397,7 +383,7 @@ function OrderCard({ order }: { order: Order }) {
               variant="outline"
               size="sm"
               onClick={buyAgain}
-              className="font-mono text-xs"
+              className="bg-white font-mono text-xs"
             >
               {reordered ? "Added to cart!" : "Buy this order again"}
             </Button>
@@ -521,27 +507,31 @@ export default function OrdersPage() {
 
   return (
     <>
-      <OrdersPageBackground />
+      {/* Paper White (#F8F7F4) page background from the brand palette */}
+      <div aria-hidden className="fixed inset-0 -z-10 bg-[#F8F7F4]" />
+
       <Navbar />
       <main className="container relative max-w-3xl flex-1 py-6 sm:py-8">
         <div className="flex items-baseline justify-between">
-          <h1 className="font-display text-2xl font-medium italic text-moss-900 sm:text-3xl">
+          <h1 className="font-display text-2xl font-medium italic text-[#252927] sm:text-3xl">
             My orders
           </h1>
           {currentUser && currentUser.role !== "admin" && !ordersLoading && (
             <button
               type="button"
               onClick={() => fetchOrders(1, false, filter)}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-moss-600 hover:text-moss-900 focus-ring rounded"
+              className="inline-flex items-center gap-1.5 rounded text-xs font-medium text-[#006B3F] hover:text-[#00A552] focus-ring"
             >
               <RefreshCw className="h-3.5 w-3.5" />
               Refresh
             </button>
           )}
         </div>
+        {/* Small Quanta Green accent under the title */}
+        <div className="mt-3 h-1 w-12 rounded-full bg-[#00A552]" />
 
         {currentUser && currentUser.role !== "admin" && (
-          <div className="mt-4 -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+          <div className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
             {FILTERS.map((f) => (
               <button
                 key={f.key}
@@ -549,8 +539,8 @@ export default function OrdersPage() {
                 onClick={() => setFilter(f.key)}
                 className={`shrink-0 rounded-full border px-3 py-1.5 font-mono text-xs font-medium transition-colors focus-ring ${
                   filter === f.key
-                    ? "border-forest bg-forest text-paper"
-                    : "border-moss-200 text-moss-600 hover:border-moss-400"
+                    ? "border-[#006B3F] bg-[#006B3F] text-white"
+                    : "border-[#C6C8C5] bg-white text-[#252927]/70 hover:border-[#006B3F]"
                 }`}
               >
                 {f.label}
@@ -561,17 +551,17 @@ export default function OrdersPage() {
 
         {loading ? (
           <div className="mt-8 flex flex-col items-center gap-3 py-16 text-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-moss-200 border-t-forest" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#C6C8C5] border-t-[#006B3F]" />
             <p className="text-sm text-muted-foreground">
               Loading your orders...
             </p>
           </div>
         ) : !currentUser ? (
-          <div className="mt-8 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-moss-200 py-16 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-moss-50">
-              <PackageSearch className="h-7 w-7 text-moss-500" />
+          <div className="mt-8 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[#C6C8C5] bg-white py-16 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F8F7F4]">
+              <PackageSearch className="h-7 w-7 text-[#006B3F]" />
             </div>
-            <h2 className="font-display text-xl font-medium text-moss-900">
+            <h2 className="font-display text-xl font-medium text-[#252927]">
               Log in to see your orders
             </h2>
             <p className="max-w-sm text-sm text-muted-foreground">
@@ -579,7 +569,11 @@ export default function OrdersPage() {
               you&apos;re logged in.
             </p>
             <div className="mt-2 flex gap-2">
-              <Button variant="outline" onClick={() => openAuth("register")}>
+              <Button
+                variant="outline"
+                className="bg-white"
+                onClick={() => openAuth("register")}
+              >
                 Register
               </Button>
               <Button variant="gradient" onClick={() => openAuth("login")}>
@@ -592,17 +586,18 @@ export default function OrdersPage() {
             <p className="text-sm text-destructive">{ordersError}</p>
             <Button
               variant="outline"
+              className="bg-white"
               onClick={() => fetchOrders(1, false, filter)}
             >
               Try again
             </Button>
           </div>
         ) : orders.length === 0 ? (
-          <div className="mt-8 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-moss-200 py-16 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-moss-50">
-              <PackageSearch className="h-7 w-7 text-moss-500" />
+          <div className="mt-8 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[#C6C8C5] bg-white py-16 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F8F7F4]">
+              <PackageSearch className="h-7 w-7 text-[#006B3F]" />
             </div>
-            <h2 className="font-display text-xl font-medium text-moss-900">
+            <h2 className="font-display text-xl font-medium text-[#252927]">
               {filter === "all" ? "No orders yet" : `No ${filter} orders`}
             </h2>
             <p className="max-w-sm text-sm text-muted-foreground">
@@ -628,6 +623,7 @@ export default function OrdersPage() {
               <div className="mt-6 flex justify-center">
                 <Button
                   variant="outline"
+                  className="bg-white"
                   onClick={() => fetchOrders(page + 1, true, filter)}
                   disabled={loadingMore}
                 >
