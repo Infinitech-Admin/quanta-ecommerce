@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SectionPaperBackground } from "@/components/section-wave-background";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -168,8 +167,8 @@ function CollectionCard({
     setFirstLoaded(false);
   }, [firstSrc]);
 
-  // Autoplay. Restarts whenever the active slide changes, so clicking an
-  // arrow or dot gives the customer a full interval on the slide they chose.
+  // Autoplay. Restarts whenever the active slide changes, so clicking a dot
+  // gives the customer a full interval on the slide they chose.
   React.useEffect(() => {
     if (!multiple || paused || reducedMotion || !firstLoaded) return;
     const id = window.setTimeout(
@@ -190,7 +189,7 @@ function CollectionCard({
   }
 
   const stop = (e: React.MouseEvent) => {
-    // The whole card is a <Link>, so don't navigate on arrow / dot clicks.
+    // The whole card is a <Link>, so don't navigate on dot clicks.
     e.preventDefault();
     e.stopPropagation();
   };
@@ -227,56 +226,31 @@ function CollectionCard({
       )}
 
       {multiple && (
-        <>
-          <button
-            type="button"
-            aria-label={`Previous image, ${collection.name}`}
-            onClick={(e) => {
-              stop(e);
-              goTo(active - 1);
-            }}
-            className="absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-moss-900 shadow-md backdrop-blur-sm transition hover:bg-white active:scale-90 sm:h-9 sm:w-9"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            aria-label={`Next image, ${collection.name}`}
-            onClick={(e) => {
-              stop(e);
-              goTo(active + 1);
-            }}
-            className="absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-moss-900 shadow-md backdrop-blur-sm transition hover:bg-white active:scale-90 sm:h-9 sm:w-9"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-
-          <div
-            className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/25 px-2 py-1.5 backdrop-blur-sm"
-            role="tablist"
-            aria-label={`Slides for ${collection.name}`}
-          >
-            {images?.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                role="tab"
-                aria-selected={i === active}
-                aria-label={`Show image ${i + 1} of ${count}`}
-                onClick={(e) => {
-                  stop(e);
-                  goTo(i);
-                }}
-                className={cn(
-                  "h-1.5 rounded-full transition-all duration-300",
-                  i === active
-                    ? "w-5 bg-white"
-                    : "w-1.5 bg-white/60 hover:bg-white/90",
-                )}
-              />
-            ))}
-          </div>
-        </>
+        <div
+          className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/25 px-2 py-1.5 backdrop-blur-sm"
+          role="tablist"
+          aria-label={`Slides for ${collection.name}`}
+        >
+          {images?.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              role="tab"
+              aria-selected={i === active}
+              aria-label={`Show image ${i + 1} of ${count}`}
+              onClick={(e) => {
+                stop(e);
+                goTo(i);
+              }}
+              className={cn(
+                "h-1.5 rounded-full transition-all duration-300",
+                i === active
+                  ? "w-5 bg-white"
+                  : "w-1.5 bg-white/60 hover:bg-white/90",
+              )}
+            />
+          ))}
+        </div>
       )}
     </Link>
   );
