@@ -225,7 +225,7 @@ export function Hero() {
             />
           </h1>
 
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-moss-800/80">
+          <p className="mt-4 max-w-sm text-sm font-medium leading-relaxed text-[#252927]">
             Shop your everyday essentials from your trusted brands. Find
             products that are eco-friendly, affordable, and reliable.
           </p>
