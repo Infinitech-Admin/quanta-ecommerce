@@ -70,13 +70,32 @@ function isBundle(tag: string | null | undefined): boolean {
   return !!tag && tag.trim().toLowerCase() === "bundle";
 }
 
-// "Bundle" badge, pinned to the bottom-left of the product photo so it
-// never collides with the discount / promo / sold badges at the top.
-function BundleBadge() {
+// "Bundle" and "N+ sold" chips. They sit in the card's text area (below the
+// photo) instead of on top of it, because the product photos already contain
+// logos and banner text that made the overlaid badges unreadable. The row
+// keeps a minimum height so cards line up even when a card has no chips.
+function CardBadges({
+  bundle = false,
+  sold,
+}: {
+  bundle?: boolean;
+  sold?: number | null;
+}) {
+  const showSold = typeof sold === "number" && sold > 0;
+
   return (
-    <span className="absolute bottom-2.5 left-2.5 z-20 rounded-full bg-[#006B3F] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow-sm">
-      Bundle
-    </span>
+    <div className="flex min-h-[1.5rem] flex-wrap items-center gap-1.5 font-sans">
+      {bundle && (
+        <span className="rounded-full bg-[#006B3F] px-2.5 py-1 text-xs font-bold uppercase leading-none tracking-wide text-white">
+          Bundle
+        </span>
+      )}
+      {showSold && (
+        <span className="rounded-full bg-yellow-300 px-2.5 py-1 text-xs font-bold leading-none text-moss-950">
+          {sold}+ sold
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -255,10 +274,10 @@ function PromoCard({ product }: { product: PromoProduct }) {
             <Sparkles className="h-3.5 w-3.5" />
           )}
         </span>
-        {isBundle(product.tag) && !soldOut && <BundleBadge />}
       </div>
 
       <div className="flex flex-1 flex-col gap-2 px-4 pb-4 pt-1">
+        <CardBadges bundle={isBundle(product.tag)} />
         <p className="truncate text-[10px] font-medium uppercase tracking-wide text-moss-500">
           {product.brand}
         </p>
@@ -304,13 +323,10 @@ function BestSellerCard({ product }: { product: Product }) {
           }`}
         />
         {soldOut && <SoldOutOverlay />}
-        <span className="absolute left-2.5 top-2.5 z-20 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-semibold text-moss-700 shadow-sm backdrop-blur">
-          {product.totalOrders ?? 0}+ sold
-        </span>
-        {isBundle(product.tag) && !soldOut && <BundleBadge />}
       </div>
 
       <div className="flex flex-1 flex-col gap-2 px-4 pb-4 pt-1">
+        <CardBadges sold={product.totalOrders} />
         <h3 className="line-clamp-2 min-h-[2.5rem] font-display text-sm font-medium leading-snug text-moss-900">
           {product.name}
         </h3>
