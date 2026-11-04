@@ -142,16 +142,18 @@ export function Footer() {
   }
 
   return (
-    <footer className="bg-moss-900 text-moss-50">
+    // Heritage Forest (#006B3F) background, Paper White (#F8F7F4) text,
+    // Industrial Silver (#C6C8C5) for rules and icons — all from the brand palette.
+    <footer className="bg-[#006B3F] text-[#F8F7F4]">
       {/* Restock reminder — the one thing this footer should be remembered for */}
-      <div className="border-b border-white/10">
+      <div className="border-b border-[#C6C8C5]/25">
         <div className="container flex flex-col items-center justify-between gap-4 py-6 sm:flex-row">
           <div className="flex items-center gap-3 text-center sm:text-left">
-            <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 sm:flex">
-              <Bell className="h-4 w-4 text-yellow-300" />
+            <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F8F7F4]/10 sm:flex">
+              <Bell className="h-4 w-4 text-[#F8F7F4]" />
             </span>
             <div>
-              <p className="font-display text-sm font-semibold text-white">
+              <p className="font-display text-sm font-semibold text-[#F8F7F4]">
                 Subscribe for the latest product updates, special discounts, and
                 exclusive offers.
               </p>
@@ -159,7 +161,7 @@ export function Footer() {
           </div>
 
           {status === "success" ? (
-            <p className="text-sm font-medium text-yellow-300">
+            <p className="text-sm font-medium text-[#F8F7F4]">
               You&apos;re on the list — thanks!
             </p>
           ) : (
@@ -176,13 +178,13 @@ export function Footer() {
                   placeholder="you@email.com"
                   aria-label="Email address"
                   disabled={status === "loading"}
-                  className="border-white/15 bg-white/5 text-white placeholder:text-moss-400 focus-visible:ring-yellow-300"
+                  className="border-[#C6C8C5]/40 bg-[#F8F7F4]/10 text-[#F8F7F4] placeholder:text-[#F8F7F4]/60 focus-visible:ring-[#F8F7F4]"
                 />
                 <Button
                   type="submit"
                   size="icon"
                   disabled={status === "loading"}
-                  className="shrink-0 rounded-full bg-yellow-300 text-moss-950 hover:bg-yellow-200"
+                  className="shrink-0 rounded-full bg-[#F8F7F4] text-[#006B3F] hover:bg-white"
                   aria-label="Subscribe"
                 >
                   {status === "loading" ? (
@@ -193,7 +195,7 @@ export function Footer() {
                 </Button>
               </form>
               {status === "error" && (
-                <p className="text-xs text-red-300">{errorMessage}</p>
+                <p className="text-xs text-red-200">{errorMessage}</p>
               )}
             </div>
           )}
@@ -206,15 +208,15 @@ export function Footer() {
         <div className="col-span-2 lg:col-span-4">
           <QuantaBadge />
 
-          <p className="mt-4 max-w-sm text-sm text-moss-200">
+          <p className="mt-4 max-w-sm text-sm text-[#F8F7F4]/80">
             Quanta Paper Corporation is a trusted Philippine manufacturer and
             distributor of quality tissue, paper, hygiene, and personal care
             products for homes, businesses, and institutions nationwide.
           </p>
 
-          <div className="mt-5 space-y-3 text-sm text-moss-200">
+          <div className="mt-5 space-y-3 text-sm text-[#F8F7F4]/80">
             <div className="flex items-start gap-2">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-moss-400" />
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#C6C8C5]" />
               <span>
                 149-A Rt. Rev. G. Aglipay,
                 <br />
@@ -227,14 +229,14 @@ export function Footer() {
               href="tel:+639178417992"
               className="flex items-center gap-2 transition-colors hover:text-white"
             >
-              <Phone className="h-4 w-4 text-moss-400" />
+              <Phone className="h-4 w-4 text-[#C6C8C5]" />
               0917 841 7992
             </a>
             <a
               href="mailto:wecare@quantapaper.com"
               className="flex items-center gap-2 transition-colors hover:text-white"
             >
-              <Mail className="h-4 w-4 text-moss-400" />
+              <Mail className="h-4 w-4 text-[#C6C8C5]" />
               wecare@quantapaper.com
             </a>
           </div>
@@ -247,7 +249,7 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={label}
-                className="rounded-full bg-white/10 p-2 transition-colors hover:bg-white/20"
+                className="rounded-full bg-[#F8F7F4]/10 p-2 text-[#F8F7F4] transition-colors hover:bg-[#F8F7F4]/25"
               >
                 <Icon className="h-4 w-4" />
               </a>
@@ -257,10 +259,10 @@ export function Footer() {
 
         {/* Help */}
         <div className="col-span-1 lg:col-span-2">
-          <h4 className="font-display text-sm font-semibold uppercase tracking-wide text-moss-300">
+          <h4 className="font-display text-sm font-bold uppercase tracking-wide text-[#F8F7F4]">
             Help
           </h4>
-          <ul className="mt-4 space-y-2.5 text-sm text-moss-200">
+          <ul className="mt-4 space-y-2.5 text-sm text-[#F8F7F4]/80">
             {HELP_LINKS.map((link) => (
               <li key={link.label}>
                 {link.href.startsWith("/") ? (
@@ -285,13 +287,13 @@ export function Footer() {
 
         {/* Contact departments */}
         <div className="col-span-2 lg:col-span-4">
-          <h4 className="font-display text-sm font-semibold uppercase tracking-wide text-moss-300">
+          <h4 className="font-display text-sm font-bold uppercase tracking-wide text-[#F8F7F4]">
             Contact
           </h4>
-          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 text-xs text-moss-200">
+          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 text-xs text-[#F8F7F4]/80">
             {DEPARTMENTS.map((dept) => (
               <div key={dept.label}>
-                <p className="font-semibold text-white">{dept.label}</p>
+                <p className="font-semibold text-[#F8F7F4]">{dept.label}</p>
                 <a
                   href={`mailto:${dept.email}`}
                   className="break-all hover:text-white"
@@ -305,8 +307,8 @@ export function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-white/10 py-5">
-        <div className="container flex flex-col items-center justify-between gap-2 text-xs text-moss-300 sm:flex-row">
+      <div className="border-t border-[#C6C8C5]/25 py-5">
+        <div className="container flex flex-col items-center justify-between gap-2 text-xs text-[#F8F7F4]/70 sm:flex-row">
           <p>
             © {new Date().getFullYear()} Quanta Paper Corporation. All rights
             reserved.
@@ -318,7 +320,7 @@ export function Footer() {
               href="https://www.infinitechphil.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-moss-200 transition-colors hover:text-white"
+              className="font-medium text-[#F8F7F4] transition-colors hover:text-white"
             >
               Infinitech Advertising Corporation
             </a>

@@ -8,6 +8,18 @@ export const metadata: Metadata = {
     "Terms of Use for the Quanta Paper Corporation e-commerce platform.",
 };
 
+/*
+ * Quanta Paper brand palette (hardcoded on this page only):
+ *   Quanta Green      #00A552  primary: accents, hover
+ *   Heritage Forest   #006B3F  secondary: links, eyebrow, hover text
+ *   Graphite Black    #252927  headings and body text
+ *   Industrial Silver #C6C8C5  borders, rules
+ *   Paper White       #F8F7F4  page background
+ */
+
+const LINK_CLASS =
+  "text-[#006B3F] underline underline-offset-2 hover:text-[#00A552]";
+
 type Section = {
   id: string;
   title: string;
@@ -75,10 +87,7 @@ const SECTIONS: Section[] = [
         to provide information about yourself that is true, accurate, current
         and complete in all respects. Should any of your registration
         information change, please notify us immediately at{" "}
-        <a
-          href="mailto:qstore@quantapaper.com"
-          className="text-forest underline underline-offset-2 hover:text-moss-900"
-        >
+        <a href="mailto:qstore@quantapaper.com" className={LINK_CLASS}>
           qstore@quantapaper.com
         </a>
         . You may also want to view our Privacy Policy and Cookie Notice to
@@ -278,7 +287,7 @@ const SECTIONS: Section[] = [
           Nothing in these Terms of Use is intended to affect your rights under
           the law:
         </p>
-        <ul className="list-disc space-y-1.5 pl-5">
+        <ul className="list-disc space-y-1.5 pl-5 marker:text-[#006B3F]">
           <li>
             That any products you order through this website shall be of
             satisfactory quality, fit for their intended purpose, and will
@@ -335,17 +344,11 @@ const SECTIONS: Section[] = [
     body: (
       <p>
         QPC Customer Support can be reached via e-mail at{" "}
-        <a
-          href="mailto:qstore@quantapaper.com"
-          className="text-forest underline underline-offset-2 hover:text-moss-900"
-        >
+        <a href="mailto:qstore@quantapaper.com" className={LINK_CLASS}>
           qstore@quantapaper.com
         </a>{" "}
         or via telephone at{" "}
-        <a
-          href="tel:+63285339250"
-          className="text-forest underline underline-offset-2 hover:text-moss-900"
-        >
+        <a href="tel:+63285339250" className={LINK_CLASS}>
           8533-9250
         </a>
         .
@@ -358,16 +361,16 @@ export default function TermsOfUsePage() {
   return (
     <>
       <Navbar />
-      <main className="flex-1 bg-background">
-        <div className="border-b border-moss-100 bg-moss-pale/30">
+      <main className="flex-1 bg-[#F8F7F4]">
+        <div className="border-b border-[#C6C8C5] bg-[#00A552]/5">
           <div className="container py-10 sm:py-14">
-            <p className="font-mono text-xs font-medium uppercase tracking-widest text-moss-500">
+            <p className="font-mono text-xs font-medium uppercase tracking-widest text-[#006B3F]">
               Legal
             </p>
-            <h1 className="mt-1 font-display text-3xl font-medium italic text-moss-900 sm:text-4xl">
+            <h1 className="mt-1 font-display text-3xl font-medium italic text-[#252927] sm:text-4xl">
               Terms of Use
             </h1>
-            <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+            <p className="mt-3 max-w-2xl text-sm text-[#252927]/65">
               These terms govern your use of the Quanta Paper Corporation
               website and e-commerce platform. Please read them carefully before
               placing an order.
@@ -379,14 +382,14 @@ export default function TermsOfUsePage() {
           {/* Section nav */}
           <nav className="hidden lg:block">
             <div className="sticky top-28 space-y-1">
-              <p className="mb-2 font-mono text-[11px] font-medium uppercase tracking-widest text-moss-400">
+              <p className="mb-2 font-mono text-[11px] font-medium uppercase tracking-widest text-[#252927]/55">
                 On this page
               </p>
               {SECTIONS.map((section) => (
                 <a
                   key={section.id}
                   href={`#${section.id}`}
-                  className="block rounded-lg px-2.5 py-1.5 text-xs text-moss-600 transition-colors hover:bg-moss-50 hover:text-moss-900"
+                  className="block rounded-lg px-2.5 py-1.5 text-xs text-[#252927]/70 transition-colors hover:bg-[#00A552]/10 hover:text-[#006B3F]"
                 >
                   {section.title}
                 </a>
@@ -402,10 +405,10 @@ export default function TermsOfUsePage() {
                 id={section.id}
                 className="scroll-mt-28"
               >
-                <h2 className="font-display text-xl font-semibold text-moss-900 sm:text-2xl">
+                <h2 className="font-display text-xl font-semibold text-[#252927] sm:text-2xl">
                   {section.title}
                 </h2>
-                <div className="mt-3 space-y-3 text-sm leading-relaxed text-moss-700 sm:text-[15px]">
+                <div className="mt-3 space-y-3 text-sm leading-relaxed text-[#252927]/80 sm:text-[15px]">
                   {section.body}
                 </div>
               </section>

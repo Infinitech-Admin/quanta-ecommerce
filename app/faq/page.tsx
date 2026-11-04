@@ -16,6 +16,15 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Input } from "@/components/ui/input";
 
+/*
+ * Quanta Paper brand palette (hardcoded on this page only):
+ *   Quanta Green      #00A552  primary: icons, accents, hover
+ *   Heritage Forest   #006B3F  secondary: links, eyebrow, hover text
+ *   Graphite Black    #252927  headings and body text
+ *   Industrial Silver #C6C8C5  borders, rules
+ *   Paper White       #F8F7F4  page background
+ */
+
 type FaqItem = {
   id: string;
   question: string;
@@ -29,6 +38,9 @@ type FaqCategory = {
   icon: React.ElementType;
   items: FaqItem[];
 };
+
+const LINK_CLASS =
+  "text-[#006B3F] underline underline-offset-2 hover:text-[#00A552]";
 
 const CATEGORIES: FaqCategory[] = [
   {
@@ -105,10 +117,7 @@ const CATEGORIES: FaqCategory[] = [
           <p>
             Once an order has been processed and you want to cancel it, kindly
             contact our Quanta Customer Support via email at{" "}
-            <a
-              href="mailto:qstore@quantapaper.com"
-              className="text-forest underline underline-offset-2 hover:text-moss-900"
-            >
+            <a href="mailto:qstore@quantapaper.com" className={LINK_CLASS}>
               qstore@quantapaper.com
             </a>
             . Cancellation takes up to 2–3 days, depending on the reason, upon
@@ -135,7 +144,7 @@ const CATEGORIES: FaqCategory[] = [
               strongly recommend cashless transactions when buying with us, to
               ensure your safety and the safety of our team.
             </p>
-            <ol className="list-decimal space-y-1.5 pl-5">
+            <ol className="list-decimal space-y-1.5 pl-5 marker:text-[#006B3F]">
               <li>PayPal</li>
               <li>Visa</li>
               <li>Mastercard</li>
@@ -169,11 +178,11 @@ const CATEGORIES: FaqCategory[] = [
               If you&apos;d like to request a refund, replacement, or return on
               your items, please see the eligibility criteria below.
             </p>
-            <p className="font-medium text-moss-900">
+            <p className="font-medium text-[#252927]">
               Who is eligible for a return, replacement, refund, or store
               credits:
             </p>
-            <ul className="list-disc space-y-1.5 pl-5">
+            <ul className="list-disc space-y-1.5 pl-5 marker:text-[#006B3F]">
               <li>Q-Store online customers with missing items</li>
               <li>Q-Store online customers who received the wrong item</li>
               <li>
@@ -183,10 +192,7 @@ const CATEGORIES: FaqCategory[] = [
             </ul>
             <p>
               If you&apos;re eligible, send us a request via email at{" "}
-              <a
-                href="mailto:qstore@quantapaper.com"
-                className="text-forest underline underline-offset-2 hover:text-moss-900"
-              >
+              <a href="mailto:qstore@quantapaper.com" className={LINK_CLASS}>
                 qstore@quantapaper.com
               </a>{" "}
               or message us on our{" "}
@@ -194,7 +200,7 @@ const CATEGORIES: FaqCategory[] = [
                 href="https://www.facebook.com/quantapaper"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-forest underline underline-offset-2 hover:text-moss-900"
+                className={LINK_CLASS}
               >
                 Quanta Paper Facebook page
               </a>
@@ -219,25 +225,29 @@ function FaqAccordionItem({
   onToggle: () => void;
 }) {
   return (
-    <div className="rounded-2xl border border-moss-100 bg-card shadow-sm">
+    <div
+      className={`rounded-2xl border bg-white shadow-sm transition-colors ${
+        open ? "border-[#00A552]/40" : "border-[#C6C8C5]"
+      }`}
+    >
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-4 p-4 text-left sm:p-5"
+        className="flex w-full items-center justify-between gap-4 rounded-2xl p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A552] sm:p-5"
       >
-        <span className="font-display text-base font-medium text-moss-900 sm:text-lg">
+        <span className="font-display text-base font-medium text-[#252927] sm:text-lg">
           {item.question}
         </span>
         <ChevronDown
-          className={`h-4 w-4 shrink-0 text-moss-400 transition-transform ${
-            open ? "rotate-180" : ""
+          className={`h-4 w-4 shrink-0 transition-transform ${
+            open ? "rotate-180 text-[#00A552]" : "text-[#252927]/50"
           }`}
         />
       </button>
 
       {open && (
-        <div className="space-y-3 border-t border-moss-100 px-4 pb-4 pt-3 text-sm leading-relaxed text-moss-700 sm:px-5 sm:pb-5 sm:text-[15px]">
+        <div className="space-y-3 border-t border-[#C6C8C5]/60 px-4 pb-4 pt-3 text-sm leading-relaxed text-[#252927]/80 sm:px-5 sm:pb-5 sm:text-[15px]">
           {item.answer}
         </div>
       )}
@@ -271,28 +281,28 @@ export default function FaqPage() {
   return (
     <>
       <Navbar />
-      <main className="flex-1 bg-background">
+      <main className="flex-1 bg-[#F8F7F4]">
         {/* Header + search */}
-        <div className="border-b border-moss-100 bg-moss-pale/30">
+        <div className="border-b border-[#C6C8C5] bg-[#00A552]/5">
           <div className="container py-10 sm:py-14">
-            <p className="font-mono text-xs font-medium uppercase tracking-widest text-moss-500">
+            <p className="font-mono text-xs font-medium uppercase tracking-widest text-[#006B3F]">
               Support
             </p>
-            <h1 className="mt-1 font-display text-3xl font-medium italic text-moss-900 sm:text-4xl">
+            <h1 className="mt-1 font-display text-3xl font-medium italic text-[#252927] sm:text-4xl">
               Frequently Asked Questions
             </h1>
-            <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+            <p className="mt-3 max-w-2xl text-sm text-[#252927]/65">
               Everything you need to know about ordering, payment, delivery, and
               returns at Q-Store.
             </p>
 
             <div className="relative mt-6 max-w-md">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-moss-400" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#252927]/50" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search questions... e.g. refund, GCash, delivery"
-                className="bg-background pl-10"
+                className="border-[#C6C8C5] bg-white pl-10 text-[#252927] placeholder:text-[#252927]/45 focus-visible:ring-[#00A552]"
               />
             </div>
 
@@ -305,11 +315,11 @@ export default function FaqPage() {
                     <a
                       key={category.id}
                       href={`#${category.id}`}
-                      className="flex items-center gap-2 rounded-full border border-moss-200 bg-background px-3.5 py-2 text-xs font-medium text-moss-700 transition-colors hover:border-moss-400 hover:text-moss-900 sm:text-sm"
+                      className="flex items-center gap-2 rounded-full border border-[#C6C8C5] bg-white px-3.5 py-2 text-xs font-medium text-[#252927]/80 transition-colors hover:border-[#00A552] hover:text-[#006B3F] sm:text-sm"
                     >
-                      <Icon className="h-3.5 w-3.5 shrink-0 text-moss-500" />
+                      <Icon className="h-3.5 w-3.5 shrink-0 text-[#00A552]" />
                       {category.label}
-                      <span className="text-moss-400">
+                      <span className="text-[#252927]/45">
                         {category.items.length}
                       </span>
                     </a>
@@ -322,18 +332,18 @@ export default function FaqPage() {
 
         <div className="container max-w-2xl py-10 sm:py-14">
           {normalizedQuery && (
-            <p className="mb-4 text-xs font-medium uppercase tracking-widest text-moss-400">
+            <p className="mb-4 text-xs font-medium uppercase tracking-widest text-[#252927]/55">
               {resultsCount} of {ALL_ITEMS_COUNT} questions match &quot;
               {query.trim()}&quot;
             </p>
           )}
 
           {filteredCategories.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-moss-200 py-16 text-center">
-              <p className="font-display text-lg font-medium text-moss-900">
+            <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[#C6C8C5] py-16 text-center">
+              <p className="font-display text-lg font-medium text-[#252927]">
                 No matching questions
               </p>
-              <p className="max-w-xs text-sm text-muted-foreground">
+              <p className="max-w-xs text-sm text-[#252927]/65">
                 Try a different search term, or reach out to us directly below.
               </p>
             </div>
@@ -348,10 +358,10 @@ export default function FaqPage() {
                     className="scroll-mt-24"
                   >
                     <div className="mb-3 flex items-center gap-2">
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-moss-100 text-moss-700">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#00A552]/10 text-[#006B3F]">
                         <Icon className="h-3.5 w-3.5" />
                       </span>
-                      <h2 className="font-display text-lg font-semibold text-moss-900 sm:text-xl">
+                      <h2 className="font-display text-lg font-semibold text-[#252927] sm:text-xl">
                         {category.label}
                       </h2>
                     </div>
@@ -377,44 +387,38 @@ export default function FaqPage() {
           )}
 
           {/* Still need help */}
-          <div className="mt-10 rounded-2xl border border-dashed border-moss-200 p-5 text-center sm:p-6">
-            <h2 className="font-display text-lg font-medium text-moss-900">
+          <div className="mt-10 rounded-2xl border border-dashed border-[#C6C8C5] p-5 text-center sm:p-6">
+            <h2 className="font-display text-lg font-medium text-[#252927]">
               Still need help?
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-[#252927]/65">
               Our support team is happy to help with anything not covered above.
             </p>
             <div className="mt-4 flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
               <a
                 href="mailto:qstore@quantapaper.com"
-                className="inline-flex items-center gap-1.5 rounded-full border border-moss-200 px-4 py-2 text-sm font-medium text-moss-700 transition-colors hover:border-moss-400 hover:text-moss-900"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#C6C8C5] bg-white px-4 py-2 text-sm font-medium text-[#252927]/80 transition-colors hover:border-[#00A552] hover:text-[#006B3F]"
               >
-                <Mail className="h-4 w-4" />
+                <Mail className="h-4 w-4 text-[#00A552]" />
                 qstore@quantapaper.com
               </a>
               <a
                 href="https://www.facebook.com/quantapaper"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-moss-200 px-4 py-2 text-sm font-medium text-moss-700 transition-colors hover:border-moss-400 hover:text-moss-900"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#C6C8C5] bg-white px-4 py-2 text-sm font-medium text-[#252927]/80 transition-colors hover:border-[#00A552] hover:text-[#006B3F]"
               >
-                <Facebook className="h-4 w-4" />
+                <Facebook className="h-4 w-4 text-[#00A552]" />
                 Message us on Facebook
               </a>
             </div>
-            <p className="mt-4 text-xs text-muted-foreground">
+            <p className="mt-4 text-xs text-[#252927]/65">
               Looking for our{" "}
-              <Link
-                href="/terms"
-                className="text-forest underline underline-offset-2 hover:text-moss-900"
-              >
+              <Link href="/terms" className={LINK_CLASS}>
                 Terms of Use
               </Link>{" "}
               or{" "}
-              <Link
-                href="/privacy"
-                className="text-forest underline underline-offset-2 hover:text-moss-900"
-              >
+              <Link href="/privacy" className={LINK_CLASS}>
                 Privacy Policy
               </Link>
               ?
