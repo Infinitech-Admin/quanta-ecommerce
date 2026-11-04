@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SectionPaperBackground } from "@/components/section-wave-background";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -33,10 +32,11 @@ const COLLECTIONS = [
 
 // Slideshow settings.
 const MAX_SLIDES = 10;
-const BASE_INTERVAL_MS = 3000;
-// Each tile gets a slightly longer interval than the one before it, so the
-// tiles drift out of sync instead of all changing at the same moment.
-const INTERVAL_STAGGER_MS = 300;
+// All four tiles change together, one "page" at a time. Page N shows the
+// N-th image of every tile (so image N of each tile should be the same brand).
+const PAGE_INTERVAL_MS = 3000;
+// Fade duration. Keep in sync with `duration-700` on the Slide below.
+const FADE_MS = 700;
 
 // Shape returned by GET /api/categories. Images can be listed as
 //   images: ["https://…/a.jpg", …]  or  images: [{ image_url: "…" }, …]
@@ -79,29 +79,35 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
+type SlideLayer = "active" | "last" | "hidden";
+
 // One slide: the image fills the whole tile (object-cover, same as the
-// original single-image tiles), cross-faded by the wrapper's opacity.
+// original single-image tiles). The incoming slide fades in ON TOP of the
+// outgoing one, which stays fully visible underneath until the fade is done,
+// so the tile never dips to the green background mid-transition.
 function Slide({
   src,
   alt,
   sizes,
-  active,
+  layer,
   priority,
   onLoad,
 }: {
   src: string;
   alt: string;
   sizes: string;
-  active: boolean;
+  layer: SlideLayer;
   priority?: boolean;
   onLoad?: () => void;
 }) {
   return (
     <div
-      aria-hidden={!active}
+      aria-hidden={layer !== "active"}
       className={cn(
         "absolute inset-0 transition-opacity duration-700 ease-in-out",
-        active ? "opacity-100" : "opacity-0",
+        layer === "active" && "z-10 opacity-100",
+        layer === "last" && "z-0 opacity-100",
+        layer === "hidden" && "z-0 opacity-0",
       )}
     >
       <Image
@@ -121,6 +127,11 @@ function CollectionCard({
   collection,
   images,
   tileIndex,
+  page,
+  lastPage,
+  onSelectPage,
+  onPause,
+  onResume,
   sizes = "100vw",
   className = "",
 }: {
@@ -128,56 +139,29 @@ function CollectionCard({
   // undefined = still loading -> skeleton
   images: string[] | undefined;
   tileIndex: number;
+  // Shared page state, owned by LifestyleCollections.
+  page: number;
+  lastPage: number | null;
+  onSelectPage: (page: number) => void;
+  onPause: () => void;
+  onResume: () => void;
   sizes?: string;
   className?: string;
 }) {
   const count = images?.length ?? 0;
   const multiple = count > 1;
 
-  const [active, setActive] = React.useState(0);
-  // The slide we just left stays mounted so it can fade out smoothly, even
-  // when a dot jumps several slides at once.
-  const [last, setLast] = React.useState<number | null>(null);
-  const [paused, setPaused] = React.useState(false);
+  // A tile with fewer images than the current page just wraps around.
+  const active = count > 0 ? page % count : 0;
+  const last = count > 0 && lastPage !== null ? lastPage % count : null;
+
   const [firstLoaded, setFirstLoaded] = React.useState(false);
-  const reducedMotion = usePrefersReducedMotion();
-
-  const goTo = React.useCallback(
-    (next: number) => {
-      if (count === 0) return;
-      const target = ((next % count) + count) % count;
-      setActive((current) => {
-        if (target !== current) setLast(current);
-        return target;
-      });
-    },
-    [count],
-  );
-
-  // Keep the active index valid if the number of images changes.
-  React.useEffect(() => {
-    if (active >= count && count > 0) {
-      setActive(0);
-      setLast(null);
-    }
-  }, [active, count]);
 
   // Reset the "first image loaded" flag if the first image itself changes.
   const firstSrc = images?.[0];
   React.useEffect(() => {
     setFirstLoaded(false);
   }, [firstSrc]);
-
-  // Autoplay. Restarts whenever the active slide changes, so clicking an
-  // arrow or dot gives the customer a full interval on the slide they chose.
-  React.useEffect(() => {
-    if (!multiple || paused || reducedMotion || !firstLoaded) return;
-    const id = window.setTimeout(
-      () => goTo(active + 1),
-      BASE_INTERVAL_MS + tileIndex * INTERVAL_STAGGER_MS,
-    );
-    return () => window.clearTimeout(id);
-  }, [active, multiple, paused, reducedMotion, firstLoaded, goTo, tileIndex]);
 
   // Only mount the slides that can be on screen soon: the current one, the
   // one fading out, and its two neighbours (so the next image is preloaded).
@@ -190,7 +174,7 @@ function CollectionCard({
   }
 
   const stop = (e: React.MouseEvent) => {
-    // The whole card is a <Link>, so don't navigate on arrow / dot clicks.
+    // The whole card is a <Link>, so don't navigate on dot clicks.
     e.preventDefault();
     e.stopPropagation();
   };
@@ -199,10 +183,10 @@ function CollectionCard({
     <Link
       href={collection.href}
       className={`group relative block overflow-hidden rounded-2xl bg-green-700 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${className}`}
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocus={() => setPaused(true)}
-      onBlur={() => setPaused(false)}
+      onMouseEnter={onPause}
+      onMouseLeave={onResume}
+      onFocus={onPause}
+      onBlur={onResume}
     >
       {(!images || !firstLoaded) && (
         <Skeleton className="absolute inset-0 rounded-none" />
@@ -219,7 +203,7 @@ function CollectionCard({
                 : collection.name
             }
             sizes={sizes}
-            active={i === active}
+            layer={i === active ? "active" : i === last ? "last" : "hidden"}
             priority={tileIndex < 2 && i === 0}
             onLoad={i === 0 ? () => setFirstLoaded(true) : undefined}
           />
@@ -227,56 +211,31 @@ function CollectionCard({
       )}
 
       {multiple && (
-        <>
-          <button
-            type="button"
-            aria-label={`Previous image, ${collection.name}`}
-            onClick={(e) => {
-              stop(e);
-              goTo(active - 1);
-            }}
-            className="absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-moss-900 shadow-md backdrop-blur-sm transition hover:bg-white active:scale-90 sm:h-9 sm:w-9"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            aria-label={`Next image, ${collection.name}`}
-            onClick={(e) => {
-              stop(e);
-              goTo(active + 1);
-            }}
-            className="absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-moss-900 shadow-md backdrop-blur-sm transition hover:bg-white active:scale-90 sm:h-9 sm:w-9"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-
-          <div
-            className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/25 px-2 py-1.5 backdrop-blur-sm"
-            role="tablist"
-            aria-label={`Slides for ${collection.name}`}
-          >
-            {images?.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                role="tab"
-                aria-selected={i === active}
-                aria-label={`Show image ${i + 1} of ${count}`}
-                onClick={(e) => {
-                  stop(e);
-                  goTo(i);
-                }}
-                className={cn(
-                  "h-1.5 rounded-full transition-all duration-300",
-                  i === active
-                    ? "w-5 bg-white"
-                    : "w-1.5 bg-white/60 hover:bg-white/90",
-                )}
-              />
-            ))}
-          </div>
-        </>
+        <div
+          className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/25 px-2 py-1.5 backdrop-blur-sm"
+          role="tablist"
+          aria-label={`Slides for ${collection.name}`}
+        >
+          {images?.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              role="tab"
+              aria-selected={i === active}
+              aria-label={`Show image ${i + 1} of ${count}`}
+              onClick={(e) => {
+                stop(e);
+                onSelectPage(i);
+              }}
+              className={cn(
+                "h-1.5 rounded-full transition-all duration-300",
+                i === active
+                  ? "w-5 bg-white"
+                  : "w-1.5 bg-white/60 hover:bg-white/90",
+              )}
+            />
+          ))}
+        </div>
       )}
     </Link>
   );
@@ -285,6 +244,13 @@ function CollectionCard({
 export function LifestyleCollections() {
   // null = still loading, [] = loaded but none / failed
   const [tiles, setTiles] = React.useState<CategoryTile[] | null>(null);
+
+  // One shared page for all four tiles, so they always change together.
+  const [page, setPage] = React.useState(0);
+  // The page we just left stays mounted so it can fade out smoothly.
+  const [lastPage, setLastPage] = React.useState<number | null>(null);
+  const [paused, setPaused] = React.useState(false);
+  const reducedMotion = usePrefersReducedMotion();
 
   React.useEffect(() => {
     let cancelled = false;
@@ -331,6 +297,56 @@ export function LifestyleCollections() {
     return fromApi.length > 0 ? fromApi : [COLLECTIONS[index].image];
   };
 
+  // Number of pages = the most images any single tile has.
+  const pageCount =
+    tiles === null
+      ? 1
+      : Math.max(1, ...COLLECTIONS.map((_, i) => imagesFor(i)?.length ?? 0));
+
+  const goTo = React.useCallback(
+    (next: number) => {
+      if (pageCount === 0) return;
+      const target = ((next % pageCount) + pageCount) % pageCount;
+      setPage((current) => {
+        if (target !== current) setLastPage(current);
+        return target;
+      });
+    },
+    [pageCount],
+  );
+
+  // Keep the page valid if the number of pages changes.
+  React.useEffect(() => {
+    if (page >= pageCount) {
+      setPage(0);
+      setLastPage(null);
+    }
+  }, [page, pageCount]);
+
+  // Once the fade has finished, drop the outgoing page so it is ready to
+  // fade in again (from opacity 0) the next time it comes around.
+  React.useEffect(() => {
+    if (lastPage === null) return;
+    const id = window.setTimeout(() => setLastPage(null), FADE_MS + 50);
+    return () => window.clearTimeout(id);
+  }, [lastPage]);
+
+  // Autoplay. Restarts whenever the page changes, so clicking a dot gives the
+  // customer a full interval on the page they chose.
+  React.useEffect(() => {
+    if (tiles === null || pageCount <= 1 || paused || reducedMotion) return;
+    const id = window.setTimeout(() => goTo(page + 1), PAGE_INTERVAL_MS);
+    return () => window.clearTimeout(id);
+  }, [tiles, page, pageCount, paused, reducedMotion, goTo]);
+
+  const shared = {
+    page,
+    lastPage,
+    onSelectPage: goTo,
+    onPause: () => setPaused(true),
+    onResume: () => setPaused(false),
+  };
+
   return (
     <section className="relative w-full overflow-hidden">
       <SectionPaperBackground />
@@ -355,6 +371,7 @@ export function LifestyleCollections() {
             collection={COLLECTIONS[0]}
             images={imagesFor(0)}
             tileIndex={0}
+            {...shared}
             sizes="(min-width: 1024px) 34vw, 100vw"
             className="aspect-[10/13] lg:col-span-1 lg:row-span-2 lg:aspect-auto lg:h-full"
           />
@@ -364,6 +381,7 @@ export function LifestyleCollections() {
             collection={COLLECTIONS[1]}
             images={imagesFor(1)}
             tileIndex={1}
+            {...shared}
             sizes="(min-width: 1024px) 66vw, 100vw"
             className="aspect-[82/25] lg:col-span-2 lg:aspect-auto lg:h-full"
           />
@@ -374,6 +392,7 @@ export function LifestyleCollections() {
               collection={COLLECTIONS[2]}
               images={imagesFor(2)}
               tileIndex={2}
+              {...shared}
               sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
               className="aspect-[8/5] lg:aspect-auto lg:h-full"
             />
@@ -381,6 +400,7 @@ export function LifestyleCollections() {
               collection={COLLECTIONS[3]}
               images={imagesFor(3)}
               tileIndex={3}
+              {...shared}
               sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
               className="aspect-[8/5] lg:aspect-auto lg:h-full"
             />
