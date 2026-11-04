@@ -100,15 +100,35 @@ function Slide({
   priority?: boolean;
   onLoad?: () => void;
 }) {
+  const target = layer === "hidden" ? 0 : 1;
+
+  // A slide that is brand new and not the outgoing one always starts at
+  // opacity 0 and only then animates to its target, so it fades in even when
+  // it was mounted at the very moment it became active. The fade itself is
+  // set inline so no global CSS can switch it off.
+  const [opacity, setOpacity] = React.useState(layer === "last" ? 1 : 0);
+
+  React.useEffect(() => {
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => setOpacity(target));
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [target]);
+
   return (
     <div
       aria-hidden={layer !== "active"}
-      className={cn(
-        "absolute inset-0 transition-opacity duration-700 ease-in-out",
-        layer === "active" && "z-10 opacity-100",
-        layer === "last" && "z-0 opacity-100",
-        layer === "hidden" && "z-0 opacity-0",
-      )}
+      className="absolute inset-0"
+      style={{
+        opacity,
+        zIndex: layer === "active" ? 2 : 1,
+        transition: `opacity ${FADE_MS}ms ease-in-out`,
+        willChange: "opacity",
+      }}
     >
       <Image
         src={src}
@@ -116,6 +136,7 @@ function Slide({
         fill
         sizes={sizes}
         priority={priority}
+        loading={priority ? undefined : "eager"}
         className="object-cover object-center"
         onLoad={onLoad}
       />
@@ -246,9 +267,14 @@ export function LifestyleCollections() {
   const [tiles, setTiles] = React.useState<CategoryTile[] | null>(null);
 
   // One shared page for all four tiles, so they always change together.
-  const [page, setPage] = React.useState(0);
-  // The page we just left stays mounted so it can fade out smoothly.
-  const [lastPage, setLastPage] = React.useState<number | null>(null);
+  // `last` is the page we just left; it stays mounted underneath while the
+  // new page fades in. Kept in one object so both change in the same update.
+  const [pager, setPager] = React.useState<{
+    page: number;
+    last: number | null;
+  }>({ page: 0, last: null });
+  const page = pager.page;
+  const lastPage = pager.last;
   const [paused, setPaused] = React.useState(false);
   const reducedMotion = usePrefersReducedMotion();
 
@@ -307,10 +333,9 @@ export function LifestyleCollections() {
     (next: number) => {
       if (pageCount === 0) return;
       const target = ((next % pageCount) + pageCount) % pageCount;
-      setPage((current) => {
-        if (target !== current) setLastPage(current);
-        return target;
-      });
+      setPager((cur) =>
+        target === cur.page ? cur : { page: target, last: cur.page },
+      );
     },
     [pageCount],
   );
@@ -318,8 +343,7 @@ export function LifestyleCollections() {
   // Keep the page valid if the number of pages changes.
   React.useEffect(() => {
     if (page >= pageCount) {
-      setPage(0);
-      setLastPage(null);
+      setPager({ page: 0, last: null });
     }
   }, [page, pageCount]);
 
@@ -327,7 +351,11 @@ export function LifestyleCollections() {
   // fade in again (from opacity 0) the next time it comes around.
   React.useEffect(() => {
     if (lastPage === null) return;
-    const id = window.setTimeout(() => setLastPage(null), FADE_MS + 50);
+    const id = window.setTimeout(
+      () =>
+        setPager((cur) => (cur.last === null ? cur : { ...cur, last: null })),
+      FADE_MS + 50,
+    );
     return () => window.clearTimeout(id);
   }, [lastPage]);
 
