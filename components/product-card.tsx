@@ -28,17 +28,25 @@ function resolveImageUrl(path: string | null | undefined): string {
   return `${IMAGE_BASE_URL}${path}`;
 }
 
+// Badge styles per tag. Keys are matched case-insensitively (see getTagStyle).
 const TAG_STYLES: Record<string, string> = {
-  "Best Seller": "border-transparent bg-green-600 text-white",
-  New: "border-transparent bg-yellow-400 text-moss-950",
+  bundle: "border-transparent bg-[#006B3F] text-white", // Heritage Forest
 };
 
-// Tags that should never be shown as a badge.
-const HIDDEN_TAGS = ["eco"];
+// Only these tags are shown as a badge on the card (lowercase).
+// To show another tag later, add it here and in TAG_STYLES.
+const VISIBLE_TAGS = ["bundle"];
+
+function getVisibleTag(tag: string | null | undefined): string | null {
+  if (!tag) return null;
+  const normalized = tag.trim().toLowerCase();
+  return VISIBLE_TAGS.includes(normalized) ? normalized : null;
+}
 
 export function ProductCard({ product }: { product: Product }) {
   const { lines, addItem, setQty } = useCart();
   const soldOut = !product.inStock || product.stock <= 0;
+  const visibleTag = getVisibleTag(product.tag);
 
   // Quantity actually in the cart right now (0 if not added yet).
   const line = lines.find((l) => l.product.id === product.id);
@@ -138,18 +146,16 @@ export function ProductCard({ product }: { product: Product }) {
           </span>
         )}
 
-        {product.tag &&
-          !soldOut &&
-          !HIDDEN_TAGS.includes(product.tag.trim().toLowerCase()) && (
-            <Badge
-              className={`absolute left-2 top-2 z-10 sm:left-3 sm:top-3 ${
-                TAG_STYLES[product.tag] ??
-                "border-transparent bg-green-600 text-white"
-              }`}
-            >
-              {product.tag}
-            </Badge>
-          )}
+        {/* Only "Bundle" shows a badge. Other tags are hidden. */}
+        {visibleTag && !soldOut && (
+          <Badge
+            className={`absolute left-2 top-2 z-10 capitalize sm:left-3 sm:top-3 ${
+              TAG_STYLES[visibleTag]
+            }`}
+          >
+            {visibleTag}
+          </Badge>
+        )}
       </div>
 
       {/* Tighter padding on phones so the 2-column grid has room to breathe */}
