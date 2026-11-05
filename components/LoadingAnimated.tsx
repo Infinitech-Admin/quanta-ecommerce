@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,13 @@ import { cn } from "@/lib/utils";
    - plays on every full page load / refresh (not on in-app navigation,
      because the root layout does not remount)
    - skipped for people who prefer reduced motion
-   - the page renders underneath the overlay, so it is never kept waiting */
+   - the page renders underneath the overlay, so it is never kept waiting
+
+   FIX: the laid strip used to be revealed by a CSS animation on a <clipPath>
+   child. Browsers don't repaint that smoothly, so the strip showed up in
+   choppy pieces. Now one requestAnimationFrame loop moves the roll and
+   widens the strip's clip rect with the SAME value every frame, so the strip
+   always grows continuously and is exactly as long as the roll has travelled. */
 const CYCLE_MS = 1600;
 /* logo + text appear as the roll finishes and stay until the page shows */
 const LOGO_DELAY_MS = 500;
@@ -58,6 +64,8 @@ export default function LoadingAnimated({
 }) {
   const [phase, setPhase] = useState<Phase>("pending");
   const [fading, setFading] = useState(false);
+  const rollRef = useRef<SVGGElement>(null);
+  const clipRef = useRef<SVGRectElement>(null);
 
   // Decide once on mount whether the loader should play. It now plays on
   // every full load/refresh; the only reason to skip it is reduced motion.
@@ -83,6 +91,34 @@ export default function LoadingAnimated({
       clearTimeout(fadeTimer);
       clearTimeout(doneTimer);
     };
+  }, [phase]);
+
+  // Roll + strip animation: one loop, one distance value per frame.
+  useEffect(() => {
+    if (phase !== "play") return;
+
+    let raf = 0;
+    const startedAt = performance.now();
+
+    const frame = (now: number) => {
+      const t = Math.min(1, (now - startedAt) / CYCLE_MS);
+      const eased = 0.5 - 0.5 * Math.cos(Math.PI * t); // ease-in-out
+      const distance = TRAVEL * eased;
+
+      // the roll (with its shadow and the strip lifting into it)
+      rollRef.current?.setAttribute(
+        "transform",
+        `translate(${START_X + distance} ${FACE_Y})`,
+      );
+      // the flat strip is exactly as long as the roll has travelled
+      // (+1px overlap hides any hairline seam under the lifting part)
+      clipRef.current?.setAttribute("width", String(distance + 1));
+
+      if (t < 1) raf = requestAnimationFrame(frame);
+    };
+
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
   }, [phase]);
 
   return (
@@ -130,114 +166,114 @@ export default function LoadingAnimated({
                   >
                     <feGaussianBlur stdDeviation="5" />
                   </filter>
+                  {/* Width is set every frame by the animation loop above. */}
                   <clipPath id="qp-strip-clip">
                     <rect
-                      className="strip-clip"
+                      ref={clipRef}
                       x={STRIP_LEFT}
                       y={FACE_Y}
-                      width={FLAT_MAX}
+                      width={0}
                       height={80}
                     />
                   </clipPath>
                 </defs>
 
                 <g className="cycle">
-                  {/* soft shadow on the ground, offset to the right */}
-                  <g transform={`translate(${START_X} ${FACE_Y})`}>
-                    <g className="move">
-                      <ellipse
-                        cx={14}
-                        cy={R + 8}
-                        rx={68}
-                        ry={8}
-                        fill="#00140b"
-                        opacity={0.45}
-                        filter="url(#qp-blur)"
-                      />
-                    </g>
-                  </g>
-
-                  {/* flat perforated strip, revealed as the roll advances */}
+                  {/* flat perforated strip: one straight, continuous piece,
+                      revealed left to right as the roll advances */}
                   <g clipPath="url(#qp-strip-clip)">
                     <rect
                       x={STRIP_LEFT}
                       y={FACE_Y + R - 12}
-                      width={FLAT_MAX}
+                      width={FLAT_MAX + 2}
                       height={14}
                       fill="#ffffff"
                     />
                     <rect
                       x={STRIP_LEFT}
                       y={FACE_Y + R - 12}
-                      width={FLAT_MAX}
+                      width={FLAT_MAX + 2}
                       height={14}
                       fill="url(#qp-dots)"
                     />
                   </g>
 
-                  <g transform={`translate(${START_X} ${FACE_Y})`}>
-                    <g className="move">
-                      {/* strip lifting into the bottom of the roll */}
-                      <polygon
-                        points={`${-RAMP},${R - 12} -6,${R - 14} 8,${R - 14} 8,${
-                          R - 2
-                        } -6,${R - 2} ${-RAMP},${R + 2}`}
-                        fill="#ffffff"
-                      />
+                  {/* the roll: shadow + lifting strip + body, moved together */}
+                  <g
+                    ref={rollRef}
+                    transform={`translate(${START_X} ${FACE_Y})`}
+                  >
+                    {/* soft shadow on the ground, offset to the right */}
+                    <ellipse
+                      cx={14}
+                      cy={R + 8}
+                      rx={68}
+                      ry={8}
+                      fill="#00140b"
+                      opacity={0.45}
+                      filter="url(#qp-blur)"
+                    />
 
-                      {/* back disc + body */}
-                      <circle
-                        cx={BX}
-                        cy={BY}
-                        r={R}
-                        fill="#e4e9e5"
-                        stroke="#cdd6cf"
-                        strokeWidth={0.9}
-                      />
-                      <polygon
-                        points={T.map((p) => p.join(",")).join(" ")}
-                        fill="#e4e9e5"
-                      />
-                      <line
-                        x1={T[0][0]}
-                        y1={T[0][1]}
-                        x2={T[1][0]}
-                        y2={T[1][1]}
-                        stroke="#cdd6cf"
-                        strokeWidth={0.9}
-                      />
-                      <line
-                        x1={T[2][0]}
-                        y1={T[2][1]}
-                        x2={T[3][0]}
-                        y2={T[3][1]}
-                        stroke="#cdd6cf"
-                        strokeWidth={0.9}
-                      />
+                    {/* strip lifting into the bottom of the roll */}
+                    <polygon
+                      points={`${-RAMP},${R - 12} -6,${R - 14} 8,${R - 14} 8,${
+                        R - 2
+                      } -6,${R - 2} ${-RAMP},${R + 2}`}
+                      fill="#ffffff"
+                    />
 
-                      {/* front face */}
-                      <circle
-                        r={R}
-                        fill="url(#qp-face)"
-                        stroke="#d5ddd7"
-                        strokeWidth={1}
-                      />
-                      <circle
-                        r={R - 4}
-                        fill="none"
-                        stroke="#e6ebe7"
-                        strokeWidth={1.2}
-                      />
+                    {/* back disc + body */}
+                    <circle
+                      cx={BX}
+                      cy={BY}
+                      r={R}
+                      fill="#e4e9e5"
+                      stroke="#cdd6cf"
+                      strokeWidth={0.9}
+                    />
+                    <polygon
+                      points={T.map((p) => p.join(",")).join(" ")}
+                      fill="#e4e9e5"
+                    />
+                    <line
+                      x1={T[0][0]}
+                      y1={T[0][1]}
+                      x2={T[1][0]}
+                      y2={T[1][1]}
+                      stroke="#cdd6cf"
+                      strokeWidth={0.9}
+                    />
+                    <line
+                      x1={T[2][0]}
+                      y1={T[2][1]}
+                      x2={T[3][0]}
+                      y2={T[3][1]}
+                      stroke="#cdd6cf"
+                      strokeWidth={0.9}
+                    />
 
-                      {/* cardboard core: static, nothing moves inside it */}
-                      <circle
-                        r={18}
-                        fill="url(#qp-core)"
-                        stroke="#6f5736"
-                        strokeWidth={0.6}
-                      />
-                      <circle r={14} fill="#3b3d3c" />
-                    </g>
+                    {/* front face */}
+                    <circle
+                      r={R}
+                      fill="url(#qp-face)"
+                      stroke="#d5ddd7"
+                      strokeWidth={1}
+                    />
+                    <circle
+                      r={R - 4}
+                      fill="none"
+                      stroke="#e6ebe7"
+                      strokeWidth={1.2}
+                    />
+
+                    {/* cardboard core: static, nothing moves inside it */}
+                    <circle
+                      r={18}
+                      fill="url(#qp-core)"
+                      stroke="#6f5736"
+                      strokeWidth={0.6}
+                    />
+                    <circle r={14} fill="#3b3d3c" />
                   </g>
                 </g>
               </svg>
@@ -274,34 +310,11 @@ export default function LoadingAnimated({
         .cycle {
           animation: fade ${CYCLE_MS}ms ease-in-out forwards;
         }
-        .move {
-          animation: travel ${CYCLE_MS}ms cubic-bezier(0.4, 0, 0.6, 1) forwards;
-        }
-        .strip-clip {
-          transform-origin: ${STRIP_LEFT}px 0;
-          animation: lay ${CYCLE_MS}ms cubic-bezier(0.4, 0, 0.6, 1) forwards;
-        }
         .brand {
           opacity: 0;
           animation: fade-in 500ms ease-out ${LOGO_DELAY_MS}ms forwards;
         }
 
-        @keyframes travel {
-          from {
-            transform: translateX(0);
-          }
-          to {
-            transform: translateX(${TRAVEL}px);
-          }
-        }
-        @keyframes lay {
-          from {
-            transform: scaleX(0);
-          }
-          to {
-            transform: scaleX(1);
-          }
-        }
         @keyframes fade {
           0% {
             opacity: 0;
