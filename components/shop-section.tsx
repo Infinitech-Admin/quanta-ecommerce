@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import { SlidersHorizontal, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, SlidersHorizontal, X } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,12 +15,16 @@ import { ProductCard, ProductCardSkeleton } from "@/components/product-card";
 import {
   FilterSidebar,
   DEFAULT_FILTERS,
+  FRESH_TOOTHBRUSH,
   type Filters,
 } from "@/components/filter-sidebar";
 import { SectionCleanBackground } from "@/components/section-wave-background";
 import { CATEGORIES, type Product } from "@/types/product";
 
 const ALL = "All items" as const;
+
+// Number of products shown per page.
+const PAGE_SIZE = 24;
 
 // Normalise so "Paper And Tissue", "paper and tissue" and "Health & Beauty"
 // all compare reliably, whatever casing the backend/types use.
@@ -56,6 +60,36 @@ const moveToPersonalCare = (p: Product): Product =>
     ? { ...p, category: PERSONAL_CARE as Product["category"] }
     : p;
 
+// Fresh toothbrush products get their own brand so they show up under the
+// "Fresh Toothbrush" filter instead of "Fresh".
+const splitFreshToothbrush = (p: Product): Product => {
+  const name = (p.name ?? "").toLowerCase();
+  const brand = (p.brand ?? "").toLowerCase();
+
+  const isToothbrush = name.includes("toothbrush");
+  const isFresh = brand.includes("fresh") || name.startsWith("fresh");
+
+  return isToothbrush && isFresh
+    ? { ...p, brand: FRESH_TOOTHBRUSH as Product["brand"] }
+    : p;
+};
+
+// Builds a page list like [1, "...", 4, 5, 6, "...", 20]
+function getPageNumbers(current: number, total: number): (number | "...")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+  const pages: (number | "...")[] = [1];
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+
+  if (start > 2) pages.push("...");
+  for (let i = start; i <= end; i++) pages.push(i);
+  if (end < total - 1) pages.push("...");
+  pages.push(total);
+
+  return pages;
+}
+
 export function ShopSection() {
   const searchParams = useSearchParams();
   const searchQuery = (searchParams.get("search") ?? "").trim();
@@ -67,6 +101,7 @@ export function ShopSection() {
   const [active, setActive] = React.useState<string>(ALL);
   const [filters, setFilters] = React.useState<Filters>(DEFAULT_FILTERS);
   const [mobileFiltersOpen, setMobileFiltersOpen] = React.useState(false);
+  const [page, setPage] = React.useState(1);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -79,7 +114,9 @@ export function ShopSection() {
         if (!cancelled) {
           setProducts(
             Array.isArray(data.products)
-              ? (data.products as Product[]).map(moveToPersonalCare)
+              ? (data.products as Product[])
+                  .map(moveToPersonalCare)
+                  .map(splitFreshToothbrush)
               : [],
           );
           setStatus("ready");
@@ -102,6 +139,11 @@ export function ShopSection() {
       setActive(ALL);
     }
   }, [searchQuery]);
+
+  // Go back to page 1 whenever the result set changes.
+  React.useEffect(() => {
+    setPage(1);
+  }, [active, filters, searchQuery]);
 
   const filtered = React.useMemo(() => {
     const q = searchQuery.toLowerCase();
@@ -132,6 +174,22 @@ export function ShopSection() {
       return aSoldOut ? 1 : -1;
     });
   }, [products, active, filters, searchQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+
+  const paginated = React.useMemo(
+    () =>
+      filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage],
+  );
+
+  const goToPage = (p: number) => {
+    setPage(p);
+    document
+      .getElementById("shop")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
     <section id="shop" className="relative w-full overflow-hidden bg-[#EEF3EA]">
@@ -234,11 +292,74 @@ export function ShopSection() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 xl:grid-cols-4">
-                  {filtered.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 xl:grid-cols-4">
+                    {paginated.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+
+                  {totalPages > 1 && (
+                    <nav
+                      aria-label="Pagination"
+                      className="mt-10 flex flex-wrap items-center justify-center gap-2"
+                    >
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage === 1}
+                        onClick={() => goToPage(currentPage - 1)}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Prev
+                      </Button>
+
+                      {getPageNumbers(currentPage, totalPages).map((p, i) =>
+                        p === "..." ? (
+                          <span
+                            key={`dots-${i}`}
+                            className="px-2 text-moss-600"
+                          >
+                            …
+                          </span>
+                        ) : (
+                          <Button
+                            key={p}
+                            size="sm"
+                            variant={p === currentPage ? "default" : "outline"}
+                            className={
+                              p === currentPage
+                                ? "bg-green-600 text-white hover:bg-green-600"
+                                : ""
+                            }
+                            aria-current={
+                              p === currentPage ? "page" : undefined
+                            }
+                            onClick={() => goToPage(p)}
+                          >
+                            {p}
+                          </Button>
+                        ),
+                      )}
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage === totalPages}
+                        onClick={() => goToPage(currentPage + 1)}
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </nav>
+                  )}
+
+                  <p className="mt-3 text-center text-xs text-muted-foreground">
+                    Showing {(currentPage - 1) * PAGE_SIZE + 1}–
+                    {Math.min(currentPage * PAGE_SIZE, filtered.length)} of{" "}
+                    {filtered.length} products
+                  </p>
+                </>
               )}
             </TabsContent>
           </div>

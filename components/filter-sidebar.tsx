@@ -25,6 +25,19 @@ export const DEFAULT_FILTERS: Filters = {
   onSaleOnly: false,
 };
 
+// Separate brand entry for Fresh toothbrush products.
+export const FRESH_TOOTHBRUSH = "Fresh Toothbrush";
+
+// Brand list shown in the sidebar: "Fresh Toothbrush" goes right after "Fresh".
+const SIDEBAR_BRANDS: string[] = (() => {
+  const list: string[] = [...BRANDS];
+  if (list.includes(FRESH_TOOTHBRUSH)) return list;
+  const i = list.findIndex((b) => b.trim().toLowerCase() === "fresh");
+  if (i === -1) list.push(FRESH_TOOTHBRUSH);
+  else list.splice(i + 1, 0, FRESH_TOOTHBRUSH);
+  return list;
+})();
+
 export function FilterSidebar({
   filters,
   onChange,
@@ -64,7 +77,7 @@ export function FilterSidebar({
       <div className="space-y-3">
         <p className="text-sm font-semibold text-moss-800">Brand</p>
         <div className="space-y-2.5">
-          {BRANDS.map((brand) => (
+          {SIDEBAR_BRANDS.map((brand) => (
             <div key={brand} className="flex items-center gap-2.5">
               <Checkbox
                 id={`brand-${brand}`}

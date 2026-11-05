@@ -16,6 +16,7 @@ const LOGOS = [
   { name: "Life Defender", src: "/logo/LifeDefender.png" },
   { name: "TeaBiotic", src: "/logo/teabiotic.png" },
   { name: "Fresh Toothbrush", src: "/logo/FreshToothbrush.png" },
+  { name: "Eco Hygiene", src: "/logo/ECOHYGIENELOGO.png" },
 ];
 
 export function BrandStrip() {
