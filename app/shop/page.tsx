@@ -18,6 +18,7 @@ import { ProductCard, ProductCardSkeleton } from "@/components/product-card";
 import {
   FilterSidebar,
   DEFAULT_FILTERS,
+  FRESH_TOOTHBRUSH,
   type Filters,
 } from "@/components/filter-sidebar";
 import { CATEGORIES, CATEGORY_LABELS, type Product } from "@/types/product";
@@ -28,6 +29,20 @@ const ALL = "All Items" as const;
 // 24 divides evenly into the 2, 3 and 4 column grids, so the last row is
 // always full. Change this one number to adjust the page size.
 const PAGE_SIZE = 24;
+
+// Fresh toothbrush products get their own brand so they show up under the
+// "Fresh Toothbrush" filter instead of "Fresh".
+const splitFreshToothbrush = (p: Product): Product => {
+  const name = (p.name ?? "").toLowerCase();
+  const brand = (p.brand ?? "").toLowerCase();
+
+  const isToothbrush = name.includes("toothbrush");
+  const isFresh = brand.includes("fresh") || name.startsWith("fresh");
+
+  return isToothbrush && isFresh
+    ? { ...p, brand: FRESH_TOOTHBRUSH as Product["brand"] }
+    : p;
+};
 
 /** Builds [1, "…", 4, 5, 6, "…", 12] style page lists. */
 function getPageItems(current: number, total: number): (number | string)[] {
@@ -230,7 +245,7 @@ export default function ShopPage() {
         if (arrayValue) list = arrayValue as Product[];
       }
 
-      setProducts(list);
+      setProducts(list.map(splitFreshToothbrush));
       setStatus("ready");
     } catch {
       setStatus("error");
