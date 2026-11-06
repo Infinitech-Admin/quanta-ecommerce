@@ -119,17 +119,18 @@ export function FilterSidebar({
                   </Label>
                 </div>
 
-                {typeOptions.length > 0 && (
+                {/* Lalabas lang ang sub-categories kapag naka-check ang brand */}
+                {checked && typeOptions.length > 0 && (
                   <div className="ml-2 mt-2.5 space-y-2.5 border-l border-[#C6C8C5] pl-4">
                     {typeOptions.map((type) => (
                       <div key={type} className="flex items-center gap-2.5">
                         <Checkbox
-                          id={`type-${type}`}
+                          id={`type-${brand}-${type}`}
                           checked={filters.types.includes(type)}
                           onCheckedChange={() => toggleType(brand, type)}
                         />
                         <Label
-                          htmlFor={`type-${type}`}
+                          htmlFor={`type-${brand}-${type}`}
                           className="text-xs font-normal text-moss-800"
                         >
                           {type}
