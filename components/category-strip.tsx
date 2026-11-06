@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -13,6 +14,12 @@ import { CATEGORIES, BRANDS, CATEGORY_LABELS } from "@/types/product";
 import { cn } from "@/lib/utils";
 
 const LABELS = CATEGORY_LABELS as Record<string, string>;
+
+// Eco-Hygiene Institutional is NOT a product category in the database. It is
+// a separate showcase page (no prices, no cart), so it is added to the strip
+// as a plain link after the real categories.
+const INSTITUTIONAL_HREF = "/eco-hygiene-institutional";
+const INSTITUTIONAL_LABEL = "Eco-Hygiene Institutional";
 
 // Unique, non-empty values. Anything in `preferredOrder` comes first (in that
 // order); everything else follows alphabetically.
@@ -30,9 +37,11 @@ function uniqueSorted(values: unknown[], preferredOrder: readonly string[]) {
 
 export function CategoryStrip() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const activeCategory = searchParams.get("category");
   const activeBrand = searchParams.get("brand");
+  const institutionalActive = pathname === INSTITUTIONAL_HREF;
 
   // Start with the static lists so the strip isn't empty on first paint or
   // if the request fails; then replace them with what's actually in the
@@ -156,6 +165,17 @@ export function CategoryStrip() {
             {LABELS[category] ?? category}
           </button>
         ))}
+
+        {/* Separate showcase page, always last in the strip. */}
+        <Link
+          href={INSTITUTIONAL_HREF}
+          className={cn(
+            "shrink-0 whitespace-nowrap transition-colors hover:text-green-600",
+            institutionalActive && "text-green-600",
+          )}
+        >
+          {INSTITUTIONAL_LABEL}
+        </Link>
       </div>
     </div>
   );
