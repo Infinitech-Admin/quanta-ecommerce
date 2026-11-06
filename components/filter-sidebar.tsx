@@ -8,9 +8,11 @@ import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { BRANDS } from "@/types/product";
+import { getBrandTypes } from "@/lib/product-types";
 
 export type Filters = {
   brands: string[];
+  types: string[];
   maxPrice: number;
   inStockOnly: boolean;
   onSaleOnly: boolean;
@@ -20,6 +22,7 @@ const MAX_PRICE_CEILING = 10000;
 
 export const DEFAULT_FILTERS: Filters = {
   brands: [],
+  types: [],
   maxPrice: MAX_PRICE_CEILING,
   inStockOnly: false,
   onSaleOnly: false,
@@ -46,10 +49,29 @@ export function FilterSidebar({
   onChange: (filters: Filters) => void;
 }) {
   const toggleBrand = (brand: string) => {
-    const brands = filters.brands.includes(brand)
+    const isOn = filters.brands.includes(brand);
+    const brands = isOn
       ? filters.brands.filter((b) => b !== brand)
       : [...filters.brands, brand];
-    onChange({ ...filters, brands });
+    // Pag na-uncheck ang brand, tanggalin din ang mga type niya.
+    const types = isOn
+      ? filters.types.filter((t) => !getBrandTypes(brand).includes(t))
+      : filters.types;
+    onChange({ ...filters, brands, types });
+  };
+
+  const toggleType = (brand: string, type: string) => {
+    const isOn = filters.types.includes(type);
+    const types = isOn
+      ? filters.types.filter((t) => t !== type)
+      : [...filters.types, type];
+    // Pag may pinili na type, awtomatikong i-check ang brand niya para
+    // hindi maapektuhan ang ibang brands sa listahan.
+    const brands =
+      !isOn && !filters.brands.includes(brand)
+        ? [...filters.brands, brand]
+        : filters.brands;
+    onChange({ ...filters, brands, types });
   };
 
   return (
@@ -77,21 +99,48 @@ export function FilterSidebar({
       <div className="space-y-3">
         <p className="text-sm font-semibold text-moss-800">Brand</p>
         <div className="space-y-2.5">
-          {SIDEBAR_BRANDS.map((brand) => (
-            <div key={brand} className="flex items-center gap-2.5">
-              <Checkbox
-                id={`brand-${brand}`}
-                checked={filters.brands.includes(brand)}
-                onCheckedChange={() => toggleBrand(brand)}
-              />
-              <Label
-                htmlFor={`brand-${brand}`}
-                className="text-sm font-normal text-moss-800"
-              >
-                {brand}
-              </Label>
-            </div>
-          ))}
+          {SIDEBAR_BRANDS.map((brand) => {
+            const checked = filters.brands.includes(brand);
+            const typeOptions = getBrandTypes(brand);
+
+            return (
+              <div key={brand}>
+                <div className="flex items-center gap-2.5">
+                  <Checkbox
+                    id={`brand-${brand}`}
+                    checked={checked}
+                    onCheckedChange={() => toggleBrand(brand)}
+                  />
+                  <Label
+                    htmlFor={`brand-${brand}`}
+                    className="text-sm font-normal text-moss-800"
+                  >
+                    {brand}
+                  </Label>
+                </div>
+
+                {typeOptions.length > 0 && (
+                  <div className="ml-2 mt-2.5 space-y-2.5 border-l border-[#C6C8C5] pl-4">
+                    {typeOptions.map((type) => (
+                      <div key={type} className="flex items-center gap-2.5">
+                        <Checkbox
+                          id={`type-${type}`}
+                          checked={filters.types.includes(type)}
+                          onCheckedChange={() => toggleType(brand, type)}
+                        />
+                        <Label
+                          htmlFor={`type-${type}`}
+                          className="text-xs font-normal text-moss-800"
+                        >
+                          {type}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 

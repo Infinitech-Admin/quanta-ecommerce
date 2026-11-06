@@ -23,6 +23,7 @@ import {
 } from "@/components/filter-sidebar";
 import { CATEGORIES, CATEGORY_LABELS, type Product } from "@/types/product";
 import { buildProductHref } from "@/lib/slug";
+import { getBrandTypes, getProductType } from "@/lib/product-types";
 
 const ALL = "All Items" as const;
 
@@ -181,6 +182,7 @@ export default function ShopPage() {
     setFilters((prev) => ({
       ...prev,
       brands: brandParam ? [brandParam] : [],
+      types: [],
     }));
   }, [searchParam, categoryParam, brandParam]);
 
@@ -278,6 +280,18 @@ export default function ShopPage() {
 
       if (filters.brands.length && !filters.brands.includes(p.brand))
         return false;
+
+      // Type filter: apektado lang ang mga brand na may napiling type.
+      // Hal. naka-check ang "Kitchen Towel" ng Fresh → Fresh products lang
+      // ang sinasala; ibang brands (kung naka-check din) ay hindi apektado.
+      const selectedForBrand = filters.types.filter((t) =>
+        getBrandTypes(p.brand).includes(t),
+      );
+      if (selectedForBrand.length) {
+        const type = getProductType(p);
+        if (!type || !selectedForBrand.includes(type)) return false;
+      }
+
       if (p.price > filters.maxPrice) return false;
       if (filters.inStockOnly && !p.inStock) return false;
       if (filters.onSaleOnly && !p.originalPrice) return false;

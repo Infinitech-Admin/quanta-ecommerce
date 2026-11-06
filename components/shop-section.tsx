@@ -20,6 +20,7 @@ import {
 } from "@/components/filter-sidebar";
 import { SectionCleanBackground } from "@/components/section-wave-background";
 import { CATEGORIES, type Product } from "@/types/product";
+import { getBrandTypes, getProductType } from "@/lib/product-types";
 
 const ALL = "All items" as const;
 
@@ -160,6 +161,16 @@ export function ShopSection() {
       if (active !== ALL && p.category !== active) return false;
       if (filters.brands.length && !filters.brands.includes(p.brand))
         return false;
+
+      // Type filter: apektado lang ang mga brand na may napiling type.
+      const selectedForBrand = filters.types.filter((t) =>
+        getBrandTypes(p.brand).includes(t),
+      );
+      if (selectedForBrand.length) {
+        const type = getProductType(p);
+        if (!type || !selectedForBrand.includes(type)) return false;
+      }
+
       if (p.price > filters.maxPrice) return false;
       if (filters.inStockOnly && !p.inStock) return false;
       if (filters.onSaleOnly && !p.originalPrice) return false;
