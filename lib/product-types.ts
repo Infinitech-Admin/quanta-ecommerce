@@ -24,9 +24,19 @@ const SWEETBABY_RULES: TypeRule[] = [
   { label: "Sweet Baby Plus", keywords: ["plus"] },
   { label: "Sweet Baby Dry", keywords: ["dry"] },
   {
-    // Huling rule: "Sweet Baby Regular Mini/Travel/Big/Econo/Jumbo Pack"
+    // Pack sizes lang, walang "regular", para hindi makuha ang ibang Regular products.
     label: "Sweet Baby Clothlike Taped",
-    keywords: ["clothlike", "cloth-like", "cloth like", "regular"],
+    keywords: [
+      "clothlike",
+      "cloth-like",
+      "cloth like",
+      "mini pack",
+      "travel pack",
+      "big pack",
+      "econo pack",
+      "jumbo pack",
+      "newborn kit",
+    ],
   },
 ];
 
