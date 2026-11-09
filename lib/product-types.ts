@@ -2,8 +2,34 @@ import type { Product } from "@/types/product";
 
 type TypeRule = { label: string; keywords: string[] };
 
-// Key = brand name, lowercase, walang spaces.
+// Key = brand name, lowercase, walang spaces, walang accents/symbols.
 // Ang ORDER ng rules ay mahalaga: first match wins.
+// Ang mga specific na rule ay nasa taas; ang catch-all ("regular") ay nasa dulo.
+
+// Shared na sub-categories para sa Kami, Smart Choice, Vanita, at Harmony.
+// Kapag iba ang types ng isang brand, gumawa ng sarili niyang array sa ibaba.
+const COMMON_RULES: TypeRule[] = [
+  { label: "Interfolded Paper Towel", keywords: ["interfold"] },
+  {
+    label: "Bathroom Tissue",
+    keywords: ["bathroom", "bath tissue", "toilet"],
+  },
+  { label: "Kitchen Towel", keywords: ["kitchen"] },
+  { label: "Facial Tissue", keywords: ["facial"] },
+];
+
+const SWEETBABY_RULES: TypeRule[] = [
+  { label: "Sweet Baby Wipes", keywords: ["wipes"] },
+  { label: "Sweet Baby Regular Pants", keywords: ["pants"] },
+  { label: "Sweet Baby Plus", keywords: ["plus"] },
+  { label: "Sweet Baby Dry", keywords: ["dry"] },
+  {
+    // Huling rule: "Sweet Baby Regular Mini/Travel/Big/Econo/Jumbo Pack"
+    label: "Sweet Baby Clothlike Taped",
+    keywords: ["clothlike", "cloth-like", "cloth like", "regular"],
+  },
+];
+
 const TYPE_RULES: Record<string, TypeRule[]> = {
   fresh: [
     { label: "Interfolded Paper Towel", keywords: ["interfold"] },
@@ -14,20 +40,22 @@ const TYPE_RULES: Record<string, TypeRule[]> = {
     { label: "Kitchen Towel", keywords: ["kitchen"] },
     { label: "Facial Tissue", keywords: ["facial"] },
   ],
-  sweetbaby: [
-    { label: "Sweet Baby Wipes", keywords: ["wipes"] },
-    {
-      label: "Sweet Baby Clothlike Taped",
-      keywords: ["clothlike", "cloth-like", "cloth like"],
-    },
-    { label: "Sweet Baby Plus", keywords: ["plus"] },
-    { label: "Sweet Baby Regular Pants", keywords: ["pants"] },
-    { label: "Sweet Baby Dry", keywords: ["dry"] },
-  ],
+  sweetbaby: SWEETBABY_RULES,
+  sbr: SWEETBABY_RULES, // alias kung "SBR" ang naka-save sa admin
+  sweetbabydiapers: SWEETBABY_RULES, // alias kung "Sweet Baby Diapers"
+  kami: COMMON_RULES,
+  smartchoice: COMMON_RULES,
+  vanita: COMMON_RULES,
+  harmony: COMMON_RULES,
 };
 
+// "Vanitá", "Vanita", "Smart-Choice", "Smart Choice™" -> pare-parehong key.
 const brandKey = (brand: string) =>
-  brand.trim().toLowerCase().replace(/\s+/g, "");
+  brand
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // alisin ang accents (á, à, é, ...)
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, ""); // alisin lahat ng hindi letter/number
 
 /** Type options na ipapakita sa sidebar para sa isang brand. */
 export const getBrandTypes = (brand: string): string[] =>
