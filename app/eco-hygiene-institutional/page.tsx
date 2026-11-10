@@ -1,7 +1,5 @@
-"use client";
 
-// 📁 FILE PATH: app/institutional/page.tsx
-// (use whatever route your public Eco-Hygiene Institutional page already has)
+"use client";
 
 import * as React from "react";
 import {
@@ -18,116 +16,245 @@ import {
   Scissors,
   PartyPopper,
   Home,
+  ChevronLeft,
+  ChevronRight,
+  ArrowRight,
+  ShieldCheck,
+  Truck,
+  Recycle,
+  BadgeCheck,
+  Droplets,
+  Sparkles,
+  CheckCircle2,
   type LucideIcon,
 } from "lucide-react";
+
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 
-// ===========================================================================
-// EDIT THIS SECTION
-// Text content only. Pictures are NOT listed here: they are uploaded in the
-// admin page and loaded from the API.
-//
-// Picture order matters:
-//   - hero:     all pictures become the slideshow
-//   - story:    picture 1 -> first row, 2 -> second row, 3 -> third row
-//   - products: picture 1 -> first tile, 2 -> second tile, and so on
-// If a position has no picture, a green placeholder is shown.
-// ===========================================================================
+// ============================================================
+// CONTENT CONFIGURATION
+// ============================================================
+
 const HERO_INTERVAL_MS = 5000;
-const PRODUCT_COUNT = 6; // number of tiles in the product grid
 
-const HERO_TITLE = "Hygiene essentials for the places that never stop";
+const HERO_TITLE = "A cleaner space starts with the right essentials.";
+
 const HERO_TEXT =
-  "Eco-Hygiene Institutional supplies tissue, towels, and washroom products to businesses and institutions.";
+  "Reliable hygiene and washroom solutions designed for businesses, institutions, and facilities of every size.";
 
-// Who we serve (icon grid)
-const SECTORS: { icon: LucideIcon; title: string; text: string }[] = [
+const PRODUCT_COUNT = 6;
+
+const PRODUCT_CAPTIONS: string[] = [
+  "Bathroom Tissue",
+  "Paper Towels",
+  "Facial Tissue",
+  "Washroom Essentials",
+  "Hand Hygiene",
+  "Institutional Supplies",
+];
+
+const PRODUCT_DESCRIPTIONS: string[] = [
+  "Dependable tissue solutions for everyday washroom needs.",
+  "Absorbent paper towels designed for busy facilities.",
+  "Soft and convenient facial tissue for guests and employees.",
+  "Essential products that help maintain cleaner spaces.",
+  "Hand hygiene essentials for everyday cleanliness.",
+  "Practical hygiene supplies for professional environments.",
+];
+
+type ManagedBanner = {
+  id: number;
+  image_url: string;
+  sort_order: number;
+};
+
+const CATEGORIES: {
+  title: string;
+  description: string;
+  imageIndex: number;
+}[] = [
+  {
+    title: "Bathroom Tissue",
+    description: "Reliable tissue solutions for every washroom.",
+    imageIndex: 0,
+  },
+  {
+    title: "Paper Towels",
+    description: "Efficient drying solutions for high-traffic spaces.",
+    imageIndex: 1,
+  },
+  {
+    title: "Facial Tissue",
+    description: "Everyday comfort for guests and employees.",
+    imageIndex: 2,
+  },
+  {
+    title: "Washroom Essentials",
+    description: "Keep your facilities clean, stocked, and ready.",
+    imageIndex: 3,
+  },
+];
+
+const SECTORS: {
+  icon: LucideIcon;
+  title: string;
+  text: string;
+}[] = [
   {
     icon: Hotel,
     title: "Hotels",
-    text: "Guest rooms, lobbies, and event spaces.",
+    text: "Guest rooms, lobbies, and hospitality facilities.",
   },
   {
     icon: UtensilsCrossed,
     title: "Restaurants",
-    text: "Dining areas, kitchens, and back-of-house.",
+    text: "Dining spaces, kitchens, and food service areas.",
   },
   {
     icon: Hospital,
-    title: "Hospitals",
-    text: "Clinics, wards, and diagnostic centers.",
+    title: "Healthcare",
+    text: "Clinics, hospitals, and patient care facilities.",
   },
   {
     icon: GraduationCap,
-    title: "Schools",
-    text: "Campuses, canteens, and dormitories.",
+    title: "Education",
+    text: "Schools, campuses, and learning institutions.",
   },
   {
     icon: Building2,
-    title: "Offices",
-    text: "Pantries, restrooms, and shared floors.",
+    title: "Corporate Offices",
+    text: "Workplaces, pantries, and shared facilities.",
   },
-  { icon: ShoppingBag, title: "Malls", text: "High-traffic public washrooms." },
+  {
+    icon: ShoppingBag,
+    title: "Retail & Malls",
+    text: "Commercial spaces and public washrooms.",
+  },
   {
     icon: Factory,
-    title: "Factories",
-    text: "Plants, warehouses, and staff facilities.",
+    title: "Manufacturing",
+    text: "Factories, warehouses, and production facilities.",
   },
   {
     icon: Plane,
-    title: "Terminals",
-    text: "Airports, ports, and transport hubs.",
+    title: "Transportation",
+    text: "Airports, terminals, and transport hubs.",
   },
   {
     icon: Home,
-    title: "Condominiums",
-    text: "Common areas and building amenities.",
+    title: "Residential",
+    text: "Condominiums and property developments.",
   },
-  { icon: Dumbbell, title: "Gyms", text: "Locker rooms and wellness centers." },
+  {
+    icon: Dumbbell,
+    title: "Fitness Centers",
+    text: "Gyms, locker rooms, and wellness facilities.",
+  },
   {
     icon: Scissors,
-    title: "Salons and Spas",
-    text: "Treatment rooms and reception areas.",
+    title: "Salons & Spas",
+    text: "Personal care, treatment, and relaxation spaces.",
   },
   {
     icon: PartyPopper,
-    title: "Events",
-    text: "Catering, venues, and large gatherings.",
+    title: "Events & Venues",
+    text: "Function halls, catering, and event facilities.",
   },
 ];
 
-// Alternating text / image rows
-const STORY: { title: string; text: string }[] = [
+const STORY = [
   {
-    title: "Hygiene supply you can count on",
-    text: "Eco-Hygiene Institutional supplies tissue, towels, and washroom essentials to businesses that cannot run out. Consistent quality, dependable stock, and a team that understands facility needs.",
+    eyebrow: "DEPENDABLE SUPPLY",
+    title: "Hygiene supply you can count on.",
+    text: "Eco-Hygiene Institutional supplies tissue, towels, and washroom essentials to businesses that cannot afford to run out. We focus on consistent quality, dependable stock, and solutions that support your everyday operations.",
+    points: [
+      "Consistent product availability",
+      "Solutions for different facility sizes",
+      "Reliable institutional supply",
+    ],
   },
   {
-    title: "Designed for heavy daily use",
-    text: "Our products are built for high-traffic environments. Jumbo rolls, interfolded towels, and matching dispensers reduce refills, reduce waste, and keep washrooms ready.",
+    eyebrow: "BUILT FOR PERFORMANCE",
+    title: "Designed for everyday demands.",
+    text: "Busy facilities need products that work as hard as their people. Our institutional range supports high-traffic environments with practical hygiene essentials designed for efficient daily use.",
+    points: [
+      "Suitable for high-volume environments",
+      "Practical everyday hygiene solutions",
+      "Products for different facility needs",
+    ],
   },
   {
-    title: "Better for the planet and your budget",
-    text: "Eco-conscious materials and efficient dispensing help facilities use less without compromising on comfort or cleanliness.",
+    eyebrow: "A SMARTER APPROACH",
+    title: "Better for the planet and your budget.",
+    text: "Make smarter choices for your facility with practical hygiene solutions that support responsible consumption. Efficient product formats and dispensing practices can help reduce unnecessary usage and waste.",
+    points: [
+      "Mindful product selection",
+      "Efficient dispensing solutions",
+      "Reduced unnecessary consumption",
+    ],
   },
 ];
 
-// ===========================================================================
+const BENEFITS = [
+  {
+    icon: BadgeCheck,
+    title: "Quality You Can Trust",
+    text: "Dependable hygiene essentials for everyday business operations.",
+  },
+  {
+    icon: Truck,
+    title: "Reliable Supply",
+    text: "Institutional supply solutions for your facility's ongoing needs.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Business-Focused",
+    text: "Product recommendations aligned with your facility requirements.",
+  },
+  {
+    icon: Recycle,
+    title: "Responsible Choices",
+    text: "Practical solutions that encourage efficient product usage.",
+  },
+];
 
-const DARK = "bg-[#0E2A1C]";
+const CTA_TITLE = "Let's find the right hygiene solutions for your facility.";
+
+const CTA_TEXT =
+  "Tell us about your business, your facility requirements, and your supply needs. Our team can help you identify the right Eco-Hygiene products for your operations.";
+
+// ============================================================
+// DESIGN SYSTEM
+// ============================================================
+
+const COLORS = {
+  dark: "#103B2A",
+  green: "#087443",
+  bright: "#10A45A",
+  light: "#F3F8F5",
+  muted: "#64756B",
+  border: "#E4ECE7",
+};
 
 type SectionKey = "hero" | "story" | "products";
 
 type ImagesBySection = Record<SectionKey, string[]>;
 
-const EMPTY_IMAGES: ImagesBySection = { hero: [], story: [], products: [] };
+const EMPTY_IMAGES: ImagesBySection = {
+  hero: [],
+  story: [],
+  products: [],
+};
 
-// Loads the saved picture URLs once, already grouped and ordered by the API.
-// If the request fails, every section falls back to placeholders.
+// ============================================================
+// IMAGE API
+// ============================================================
+
 function useInstitutionalImages(): ImagesBySection {
-  const [images, setImages] = React.useState<ImagesBySection>(EMPTY_IMAGES);
+  const [images, setImages] =
+    React.useState<ImagesBySection>(EMPTY_IMAGES);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -135,11 +262,18 @@ function useInstitutionalImages(): ImagesBySection {
     async function load() {
       try {
         const res = await fetch("/api/institutional/public");
+
         if (!res.ok) return;
+
         const data = await res.json();
 
-        const pick = (v: unknown): string[] =>
-          Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
+        const pick = (value: unknown): string[] =>
+          Array.isArray(value)
+            ? value.filter(
+                (item): item is string =>
+                  typeof item === "string" && item.length > 0
+              )
+            : [];
 
         if (!cancelled) {
           setImages({
@@ -148,12 +282,16 @@ function useInstitutionalImages(): ImagesBySection {
             products: pick(data?.products),
           });
         }
-      } catch {
-        // Keep placeholders if the API is unreachable.
+      } catch (error) {
+        console.error(
+          "Unable to load institutional images:",
+          error
+        );
       }
     }
 
     load();
+
     return () => {
       cancelled = true;
     };
@@ -162,128 +300,549 @@ function useInstitutionalImages(): ImagesBySection {
   return images;
 }
 
-function Placeholder({ className = "" }: { className?: string }) {
+// ============================================================
+// IMAGE COMPONENTS
+// ============================================================
+
+function Placeholder({
+  className = "",
+}: {
+  className?: string;
+}) {
   return (
     <div
-      className={`flex items-center justify-center bg-gradient-to-br from-[#006B3F] to-[#00A552] ${className}`}
+      className={`flex items-center justify-center bg-gradient-to-br from-[#0B5938] to-[#13A45C] ${className}`}
     >
-      <Leaf className="h-12 w-12 text-white/30" aria-hidden />
+      <Leaf className="h-12 w-12 text-white/30" />
     </div>
   );
 }
 
-function Photo({ src, className = "" }: { src?: string; className?: string }) {
-  if (!src) return <Placeholder className={className} />;
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt="" className={`object-cover ${className}`} />;
+function Photo({
+  src,
+  className = "",
+}: {
+  src?: string;
+  className?: string;
+}) {
+  if (!src) {
+    return <Placeholder className={className} />;
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      loading="lazy"
+      className={`object-cover ${className}`}
+    />
+  );
 }
 
-// Full banner picture(s) at their natural shape, with no text on top.
-// The pictures are stacked in one grid cell, so the banner is as tall as the
-// picture needs to be and nothing is cropped. Slideshow if more than one.
-function HeroBanner({ images }: { images: string[] }) {
+// ============================================================
+// HERO SLIDESHOW
+// ============================================================
+
+function HeroSlideshow({
+  images,
+}: {
+  images: string[];
+}) {
   const [index, setIndex] = React.useState(0);
+
+  const count = images.length;
 
   React.useEffect(() => {
     setIndex(0);
-    if (images.length <= 1) return;
-    // Respect the user's "reduce motion" setting.
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const id = window.setInterval(
-      () => setIndex((i) => (i + 1) % images.length),
-      HERO_INTERVAL_MS,
+
+    if (count <= 1) return;
+
+    if (
+      window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches
+    ) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setIndex((current) => (current + 1) % count);
+    }, HERO_INTERVAL_MS);
+
+    return () => window.clearInterval(timer);
+  }, [count]);
+
+  const go = (direction: number) => {
+    setIndex(
+      (current) =>
+        (current + direction + count) % count
     );
-    return () => window.clearInterval(id);
-  }, [images]);
+  };
 
   return (
-    <div className="relative grid w-full overflow-hidden bg-[#0E2A1C]">
-      {images.map((src, i) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          key={src}
-          src={src}
-          alt=""
-          className={`col-start-1 row-start-1 h-auto w-full object-cover transition-opacity duration-1000 ${
-            i === index ? "opacity-100" : "opacity-0"
-          }`}
-        />
-      ))}
+    <div className="group relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[#103B2A] shadow-2xl shadow-[#103B2A]/15 lg:aspect-[5/4]">
+      {count === 0 ? (
+        <Placeholder className="absolute inset-0" />
+      ) : (
+        images.map((src, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={`${src}-${i}`}
+            src={src}
+            alt={`Eco-Hygiene institutional showcase ${i + 1}`}
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
+              i === index ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        ))
+      )}
 
-      {images.length > 1 && (
-        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
-          {images.map((src, i) => (
-            <button
-              key={src}
-              type="button"
-              aria-label={`Show hero image ${i + 1}`}
-              onClick={() => setIndex(i)}
-              className={`h-1.5 rounded-full shadow transition-all ${
-                i === index ? "w-5 bg-white" : "w-1.5 bg-white/60"
-              }`}
-            />
-          ))}
-        </div>
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0E2A1C]/30 via-transparent to-transparent" />
+
+      {count > 1 && (
+        <>
+          <button
+            type="button"
+            aria-label="Previous slide"
+            onClick={() => go(-1)}
+            className="absolute left-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#103B2A] shadow-lg transition hover:bg-white"
+          >
+            <ChevronLeft size={20} />
+          </button>
+
+          <button
+            type="button"
+            aria-label="Next slide"
+            onClick={() => go(1)}
+            className="absolute right-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#103B2A] shadow-lg transition hover:bg-white"
+          >
+            <ChevronRight size={20} />
+          </button>
+
+          <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-2">
+            {images.map((src, i) => (
+              <button
+                key={`${src}-${i}`}
+                type="button"
+                aria-label={`Show slide ${i + 1}`}
+                aria-current={i === index}
+                onClick={() => setIndex(i)}
+                className={`h-2 rounded-full transition-all ${
+                  i === index
+                    ? "w-8 bg-white"
+                    : "w-2 bg-white/60"
+                }`}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
 }
 
-function ViewProductsButton() {
+// ============================================================
+// SECTION LABEL
+// ============================================================
+
+function SectionLabel({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <Button
-      asChild
-      size="lg"
-      variant="outline"
-      className="border-white bg-white text-[#0E2A1C] hover:bg-white/90"
-    >
-      <a href="#products">View products</a>
-    </Button>
+    <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#087443]">
+      <span className="h-1.5 w-1.5 rounded-full bg-[#10A45A]" />
+      {children}
+    </span>
   );
 }
 
-function Hero({ images }: { images: string[] }) {
-  // With pictures: banner on top, text on a solid dark panel below.
-  // The pictures usually carry their own text and products, so we never
-  // write over them.
-  if (images.length > 0) {
-    return (
-      <section>
-        <HeroBanner images={images} />
-        <div className={DARK}>
-          <div className="container flex flex-col items-center py-10 text-center sm:py-14">
-            <h1 className="max-w-3xl font-display text-3xl font-medium leading-tight text-white sm:text-5xl">
-              {HERO_TITLE}
-            </h1>
-            <p className="mt-4 max-w-xl text-base text-white/80 sm:text-lg">
-              {HERO_TEXT}
-            </p>
-            <div className="mt-8">
-              <ViewProductsButton />
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
+// ============================================================
+// HERO BANNER
+// ============================================================
 
-  // No pictures yet: green placeholder with the text on top.
+function Hero() {
+  const [bannerSrc, setBannerSrc] = React.useState(
+    "/banner/eco-hygiene-institutional-banner.jpg",
+  );
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    fetch("/api/banners", { cache: "no-store" })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load hero banner");
+        return res.json() as Promise<ManagedBanner[]>;
+      })
+      .then((banners) => {
+        if (cancelled || banners.length === 0) return;
+
+        const banner = [...banners]
+          .filter((item) => item.image_url)
+          .sort((a, b) => a.sort_order - b.sort_order)[0];
+
+        if (banner) setBannerSrc(banner.image_url);
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          console.error("Unable to load the institutional hero banner.", error);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
-    <section className="relative isolate overflow-hidden bg-gradient-to-br from-[#006B3F] to-[#00A552]">
-      <div className="container flex min-h-[420px] flex-col justify-center py-16 sm:min-h-[520px]">
-        <h1 className="max-w-2xl font-display text-4xl font-medium leading-tight text-white sm:text-6xl">
-          {HERO_TITLE}
-        </h1>
-        <p className="mt-4 max-w-xl text-base text-white/90 sm:text-lg">
-          {HERO_TEXT}
-        </p>
-        <div className="mt-8">
-          <ViewProductsButton />
+    <section className="w-full overflow-hidden bg-[#F1F8EE]">
+      <div className="w-full">
+        <a
+          href="#products"
+          aria-label="Explore Eco-Hygiene institutional products"
+          className="block w-full"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={bannerSrc}
+            alt="Q-STORE - Everyday essentials. Quality you can trust. Your one-stop-store for hygiene, cleaning and institutional supplies."
+            className="block h-auto w-full object-contain"
+            fetchPriority="high"
+          />
+        </a>
+      </div>
+    </section>
+  );
+}
+
+// ============================================================
+// PRODUCT CATEGORIES
+// ============================================================
+
+function ProductCategories({
+  images,
+}: {
+  images: string[];
+}) {
+  return (
+    <section className="bg-white py-16">
+      <div className="container">
+        <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+          <div>
+            <SectionLabel>
+              EXPLORE OUR RANGE
+            </SectionLabel>
+
+            <h2 className="mt-4 max-w-2xl font-display text-3xl font-semibold leading-tight text-[#103B2A] sm:text-4xl">
+              Essential products for cleaner workplaces.
+            </h2>
+          </div>
+
+          <p className="max-w-md text-sm leading-7 text-[#64756B] sm:text-base">
+            Discover hygiene essentials and institutional
+            products designed to support your daily facility
+            requirements.
+          </p>
+        </div>
+
+        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {CATEGORIES.map((category) => (
+            <a
+              href="#products"
+              key={category.title}
+              className="group overflow-hidden rounded-xl border border-[#E4ECE7] bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#103B2A]/10"
+            >
+              <div className="aspect-[4/3] overflow-hidden bg-[#F3F8F5]">
+                <Photo
+                  src={images[category.imageIndex]}
+                  className="h-full w-full transition-transform duration-500 group-hover:scale-105"
+                />
+              </div>
+
+              <div className="p-5">
+                <h3 className="font-display text-lg font-semibold text-[#103B2A]">
+                  {category.title}
+                </h3>
+
+                <p className="mt-2 text-sm leading-6 text-[#64756B]">
+                  {category.description}
+                </p>
+
+                <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#087443]">
+                  Explore range
+                  <ArrowRight
+                    size={15}
+                    className="transition-transform group-hover:translate-x-1"
+                  />
+                </span>
+              </div>
+            </a>
+          ))}
         </div>
       </div>
     </section>
   );
 }
+
+// ============================================================
+// WHY ECO-HYGIENE
+// ============================================================
+
+function WhyEcoHygiene() {
+  return (
+    <section className="bg-[#103B2A] py-16 text-white sm:py-20">
+      <div className="container">
+        <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:gap-16">
+          <div>
+            <SectionLabel>
+              YOUR INSTITUTIONAL PARTNER
+            </SectionLabel>
+
+            <h2 className="mt-5 font-display text-3xl font-semibold leading-tight sm:text-4xl">
+              More than products. A better approach to hygiene.
+            </h2>
+
+            <p className="mt-5 text-base leading-8 text-white/70">
+              The right hygiene supplies help create cleaner,
+              more comfortable, and more efficient spaces.
+              Eco-Hygiene supports businesses with practical
+              institutional solutions.
+            </p>
+
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {BENEFITS.map(({ icon: Icon, title, text }) => (
+              <div
+                key={title}
+                className="rounded-xl border border-white/10 bg-white/[0.06] p-6 transition hover:bg-white/[0.10]"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#10A45A]/20 text-[#65D99A]">
+                  <Icon size={23} />
+                </div>
+
+                <h3 className="mt-5 text-lg font-semibold">
+                  {title}
+                </h3>
+
+                <p className="mt-2 text-sm leading-7 text-white/65">
+                  {text}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================================
+// INDUSTRIES WE SERVE
+// ============================================================
+
+function Industries() {
+  return (
+    <section className="bg-[#F3F8F5] py-16 sm:py-24">
+      <div className="container">
+        <div className="mx-auto max-w-2xl text-center">
+          <SectionLabel>
+            INDUSTRY SOLUTIONS
+          </SectionLabel>
+
+          <h2 className="mt-4 font-display text-3xl font-semibold leading-tight text-[#103B2A] sm:text-4xl">
+            Solutions for every kind of facility.
+          </h2>
+
+          <p className="mt-4 text-base leading-7 text-[#64756B]">
+            Every industry has different hygiene requirements.
+            We help businesses find the right essentials for
+            their everyday operations.
+          </p>
+        </div>
+
+        <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+          {SECTORS.map(({ icon: Icon, title, text }) => (
+            <div
+              key={title}
+              className="group rounded-xl border border-[#E4ECE7] bg-white p-4 transition-all duration-300 hover:border-[#10A45A] hover:shadow-lg hover:shadow-[#103B2A]/5 sm:p-6"
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#EAF5EE] text-[#087443] transition-colors group-hover:bg-[#087443] group-hover:text-white">
+                <Icon size={21} />
+              </div>
+
+              <h3 className="mt-4 text-sm font-bold text-[#103B2A] sm:text-base">
+                {title}
+              </h3>
+
+              <p className="mt-2 text-xs leading-6 text-[#64756B] sm:text-sm">
+                {text}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================================
+// STORY / FEATURE SECTIONS
+// ============================================================
+
+function StorySection({
+  images,
+}: {
+  images: string[];
+}) {
+  return (
+    <section className="bg-white py-16 sm:py-24">
+      <div className="container">
+        <div className="max-w-2xl">
+          <SectionLabel>
+            THE ECO-HYGIENE DIFFERENCE
+          </SectionLabel>
+
+          <h2 className="mt-4 font-display text-3xl font-semibold leading-tight text-[#103B2A] sm:text-4xl">
+            A cleaner standard for institutions.
+          </h2>
+
+          <p className="mt-4 text-base leading-7 text-[#64756B]">
+            Discover how the right products and practical
+            hygiene solutions can make a difference in your
+            facility.
+          </p>
+        </div>
+
+        <div className="mt-14 space-y-20 sm:mt-20 sm:space-y-28">
+          {STORY.map((item, i) => {
+            const flip = i % 2 === 1;
+
+            return (
+              <div
+                key={item.title}
+                className="grid items-center gap-10 lg:grid-cols-2 lg:gap-20"
+              >
+                <div className={flip ? "lg:order-2" : ""}>
+                  <div className="relative">
+                    <div
+                      className={`absolute -bottom-4 hidden h-full w-full rounded-2xl bg-[#DDEFE3] lg:block ${
+                        flip ? "-left-4" : "-right-4"
+                      }`}
+                    />
+
+                    <Photo
+                      src={images[i]}
+                      className="relative aspect-[5/4] w-full rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                <div className={flip ? "lg:order-1" : ""}>
+                  <SectionLabel>
+                    {item.eyebrow}
+                  </SectionLabel>
+
+                  <h3 className="mt-5 max-w-lg font-display text-3xl font-semibold leading-tight text-[#103B2A] sm:text-4xl">
+                    {item.title}
+                  </h3>
+
+                  <p className="mt-5 max-w-xl text-base leading-8 text-[#64756B]">
+                    {item.text}
+                  </p>
+
+                  <ul className="mt-6 space-y-3">
+                    {item.points.map((point) => (
+                      <li
+                        key={point}
+                        className="flex items-start gap-3 text-sm font-medium text-[#103B2A]"
+                      >
+                        <CheckCircle2
+                          size={18}
+                          className="mt-0.5 shrink-0 text-[#087443]"
+                        />
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================================
+// INSTITUTIONAL PRODUCT SHOWCASE
+// ============================================================
+
+function ProductShowcase({
+  images,
+}: {
+  images: string[];
+}) {
+  return (
+    <section
+      id="products"
+      className="scroll-mt-24 bg-[#F3F8F5] py-16 sm:py-24"
+    >
+      <div className="container">
+        <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+          <div>
+            <SectionLabel>
+              OUR PRODUCT COLLECTION
+            </SectionLabel>
+
+            <h2 className="mt-4 font-display text-3xl font-semibold leading-tight text-[#103B2A] sm:text-4xl">
+              Our institutional range.
+            </h2>
+
+            <p className="mt-4 max-w-xl text-base leading-7 text-[#64756B]">
+              Explore our selection of hygiene products and
+              essential supplies for professional environments.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: PRODUCT_COUNT }).map((_, i) => {
+            const caption = PRODUCT_CAPTIONS[i];
+            const description = PRODUCT_DESCRIPTIONS[i];
+
+            return (
+              <article
+                key={i}
+                className="group overflow-hidden rounded-xl border border-[#E4ECE7] bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#103B2A]/10"
+              >
+                <div className="aspect-[4/3] overflow-hidden bg-[#EAF5EE]">
+                  <Photo
+                    src={images[i]}
+                    className="h-full w-full transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        <p className="mt-8 text-center text-xs leading-6 text-[#64756B]">
+          Product availability and specifications are subject
+          to confirmation. Contact our team for product details
+          and quotations.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ============================================================
+// MAIN PAGE
+// ============================================================
 
 export default function EcoHygieneInstitutionalPage() {
   const images = useInstitutionalImages();
@@ -291,103 +850,22 @@ export default function EcoHygieneInstitutionalPage() {
   return (
     <>
       <Navbar />
-      <main className="flex-1">
-        {/* 1. Hero */}
-        <Hero images={images.hero} />
 
-        {/* 2. Dark icon grid: who we serve */}
-        <section className={`${DARK} border-t border-white/10`}>
-          <div className="container py-14 sm:py-20">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="font-display text-2xl font-medium text-white sm:text-4xl">
-                Supplies for every kind of facility
-              </h2>
-              <p className="mt-3 text-sm text-white/70 sm:text-base">
-                From a single office to a multi-site operation, we match
-                products to how your space is used.
-              </p>
-            </div>
+      <main className="min-h-screen bg-white">
+        <Hero />
 
-            <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
-              {SECTORS.map(({ icon: Icon, title, text }) => (
-                <div
-                  key={title}
-                  className="flex flex-col items-center text-center"
-                >
-                  <span className="flex h-14 w-14 items-center justify-center rounded-full border border-[#00A552]/60 text-[#00A552]">
-                    <Icon className="h-6 w-6" aria-hidden />
-                  </span>
-                  <h3 className="mt-4 text-sm font-semibold uppercase tracking-wide text-white">
-                    {title}
-                  </h3>
-                  <p className="mt-1 max-w-[200px] text-xs text-white/60">
-                    {text}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <ProductCategories images={images.products} />
 
-        {/* 3. Alternating text / image rows */}
-        <section className={`${DARK} border-t border-white/10`}>
-          <div className="container py-14 sm:py-20">
-            <h2 className="mx-auto max-w-2xl text-center font-display text-2xl font-medium text-white sm:text-4xl">
-              A cleaner standard for institutions
-            </h2>
+        <WhyEcoHygiene />
 
-            <div className="mt-12 space-y-10">
-              {STORY.map((row, i) => (
-                <div
-                  key={row.title}
-                  className="grid items-center gap-6 md:grid-cols-2 md:gap-10"
-                >
-                  <div className={i % 2 === 1 ? "md:order-2" : ""}>
-                    <Photo
-                      src={images.story[i]}
-                      className="aspect-[4/3] w-full rounded-xl"
-                    />
-                  </div>
-                  <div className={i % 2 === 1 ? "md:order-1" : ""}>
-                    <h3 className="font-display text-xl font-medium text-white sm:text-2xl">
-                      {row.title}
-                    </h3>
-                    <p className="mt-3 text-sm leading-relaxed text-white/70 sm:text-base">
-                      {row.text}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <Industries />
 
-        {/* 4. Product grid: pictures only, no labels */}
-        <section
-          id="products"
-          className={`${DARK} scroll-mt-24 border-t border-white/10`}
-        >
-          <div className="container py-14 sm:py-20">
-            <h2 className="mx-auto max-w-2xl text-center font-display text-2xl font-medium text-white sm:text-4xl">
-              Our institutional range
-            </h2>
+        <StorySection images={images.story} />
 
-            <div className="mt-12 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: PRODUCT_COUNT }).map((_, i) => (
-                <div
-                  key={i}
-                  className="group relative aspect-[4/3] overflow-hidden rounded-xl"
-                >
-                  <Photo
-                    src={images.products[i]}
-                    className="h-full w-full transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <ProductShowcase images={images.products} />
+
       </main>
+
       <Footer />
     </>
   );
