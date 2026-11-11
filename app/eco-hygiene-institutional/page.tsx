@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -19,19 +18,13 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowRight,
-  ShieldCheck,
-  Truck,
-  Recycle,
-  BadgeCheck,
-  Droplets,
-  Sparkles,
   CheckCircle2,
+  X,
   type LucideIcon,
 } from "lucide-react";
 
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { Button } from "@/components/ui/button";
 
 // ============================================================
 // CONTENT CONFIGURATION
@@ -39,61 +32,32 @@ import { Button } from "@/components/ui/button";
 
 const HERO_INTERVAL_MS = 5000;
 
-const HERO_TITLE = "A cleaner space starts with the right essentials.";
-
-const HERO_TEXT =
-  "Reliable hygiene and washroom solutions designed for businesses, institutions, and facilities of every size.";
-
-const PRODUCT_COUNT = 6;
-
-const PRODUCT_CAPTIONS: string[] = [
-  "Bathroom Tissue",
-  "Paper Towels",
-  "Facial Tissue",
-  "Washroom Essentials",
-  "Hand Hygiene",
-  "Institutional Supplies",
-];
-
-const PRODUCT_DESCRIPTIONS: string[] = [
-  "Dependable tissue solutions for everyday washroom needs.",
-  "Absorbent paper towels designed for busy facilities.",
-  "Soft and convenient facial tissue for guests and employees.",
-  "Essential products that help maintain cleaner spaces.",
-  "Hand hygiene essentials for everyday cleanliness.",
-  "Practical hygiene supplies for professional environments.",
-];
-
 type ManagedBanner = {
   id: number;
   image_url: string;
   sort_order: number;
 };
 
+// Product category tiles (4th tile "Washroom Essentials" removed)
 const CATEGORIES: {
   title: string;
   description: string;
   imageIndex: number;
 }[] = [
   {
-    title: "Bathroom Tissue",
-    description: "Reliable tissue solutions for every washroom.",
+    title: "Paper",
+    description: "Reliable tissue and towel solutions for every washroom.",
     imageIndex: 0,
   },
   {
-    title: "Paper Towels",
-    description: "Efficient drying solutions for high-traffic spaces.",
+    title: "Disinfectants",
+    description: "Hand soaps and sanitizers for cleaner, safer facilities.",
     imageIndex: 1,
   },
   {
-    title: "Facial Tissue",
-    description: "Everyday comfort for guests and employees.",
-    imageIndex: 2,
-  },
-  {
-    title: "Washroom Essentials",
+    title: "Dispensers",
     description: "Keep your facilities clean, stocked, and ready.",
-    imageIndex: 3,
+    imageIndex: 2,
   },
 ];
 
@@ -166,8 +130,8 @@ const SECTORS: {
 
 const STORY = [
   {
-    eyebrow: "DEPENDABLE SUPPLY",
-    title: "Hygiene supply you can count on.",
+    eyebrow: "ECO-READY",
+    title: "Designed for everyday demands.",
     text: "Eco-Hygiene Institutional supplies tissue, towels, and washroom essentials to businesses that cannot afford to run out. We focus on consistent quality, dependable stock, and solutions that support your everyday operations.",
     points: [
       "Consistent product availability",
@@ -176,8 +140,8 @@ const STORY = [
     ],
   },
   {
-    eyebrow: "BUILT FOR PERFORMANCE",
-    title: "Designed for everyday demands.",
+    eyebrow: "ECO-SAVE",
+    title: "Practically made to fit for everyday needs.",
     text: "Busy facilities need products that work as hard as their people. Our institutional range supports high-traffic environments with practical hygiene essentials designed for efficient daily use.",
     points: [
       "Suitable for high-volume environments",
@@ -186,8 +150,8 @@ const STORY = [
     ],
   },
   {
-    eyebrow: "A SMARTER APPROACH",
-    title: "Better for the planet and your budget.",
+    eyebrow: "ECO-SMART",
+    title: "Smarter choice for a greener community.",
     text: "Make smarter choices for your facility with practical hygiene solutions that support responsible consumption. Efficient product formats and dispensing practices can help reduce unnecessary usage and waste.",
     points: [
       "Mindful product selection",
@@ -197,46 +161,108 @@ const STORY = [
   },
 ];
 
-const BENEFITS = [
+// ------------------------------------------------------------
+// Product showcase. Order must match the order of images
+// returned by the API (`products`). Fill in each `specs` list
+// with the real specification details for that product.
+// ------------------------------------------------------------
+type Product = {
+  name: string;
+  tagline: string;
+  specs: { label: string; value: string }[];
+};
+
+const PRODUCTS: Product[] = [
   {
-    icon: BadgeCheck,
-    title: "Quality You Can Trust",
-    text: "Dependable hygiene essentials for everyday business operations.",
+    name: "Institutional Hygiene Solutions",
+    tagline: "Reliable hygiene essentials for every workplace and facility.",
+    specs: [
+      { label: "Brand", value: "Eco-Hygiene" },
+      { label: "Category", value: "Institutional hygiene supplies" },
+    ],
   },
   {
-    icon: Truck,
-    title: "Reliable Supply",
-    text: "Institutional supply solutions for your facility's ongoing needs.",
+    name: "Liquid Hand Soap – Powder Scent",
+    tagline: "Gentle everyday handwashing for a cleaner environment.",
+    specs: [
+      { label: "Brand", value: "Eco-Hygiene" },
+      { label: "Product type", value: "Liquid hand soap" },
+      { label: "Scent", value: "Powder" },
+    ],
   },
   {
-    icon: ShieldCheck,
-    title: "Business-Focused",
-    text: "Product recommendations aligned with your facility requirements.",
+    name: "Liquid Hand Soap – Apple Scent",
+    tagline: "Freshness and cleanliness for everyday hand care.",
+    specs: [
+      { label: "Brand", value: "Eco-Hygiene" },
+      { label: "Product type", value: "Liquid hand soap" },
+      { label: "Scent", value: "Apple" },
+    ],
   },
   {
-    icon: Recycle,
-    title: "Responsible Choices",
-    text: "Practical solutions that encourage efficient product usage.",
+    name: "Hand Sanitizer Gel – Apple Scent",
+    tagline: "Convenient hygiene solutions for every workplace.",
+    specs: [
+      { label: "Brand", value: "Eco-Hygiene" },
+      { label: "Product type", value: "Hand sanitizer gel" },
+      { label: "Scent", value: "Apple" },
+    ],
+  },
+  {
+    name: "Liquid Hand Soap – Strawberry Scent",
+    tagline: "Refreshing hand care for everyday cleanliness.",
+    specs: [
+      { label: "Brand", value: "Eco-Hygiene" },
+      { label: "Product type", value: "Liquid hand soap" },
+      { label: "Scent", value: "Strawberry" },
+    ],
+  },
+  {
+    name: "Institutional Hygiene Solutions",
+    tagline: "Quality products. Practical solutions. Everyday value.",
+    specs: [
+      { label: "Brand", value: "Eco-Hygiene" },
+      { label: "Category", value: "Institutional hygiene supplies" },
+    ],
   },
 ];
 
-const CTA_TITLE = "Let's find the right hygiene solutions for your facility.";
+const CONTACT_NUMBER = "(02) 8533 9250";
 
-const CTA_TEXT =
-  "Tell us about your business, your facility requirements, and your supply needs. Our team can help you identify the right Eco-Hygiene products for your operations.";
+// ------------------------------------------------------------
+// Customers. Place logo files in /public/customers/.
+// If a file is missing, the customer name is shown instead.
+// ------------------------------------------------------------
+const CUSTOMERS: { name: string; src: string }[] = [
+  { name: "ABS-CBN", src: "/customers/abs-cbn.png" },
+  { name: "Accenture", src: "/customers/accenture.png" },
+  { name: "Araneta Center", src: "/customers/araneta-center.png" },
+  { name: "Ayala", src: "/customers/ayala.png" },
+  { name: "City of Dreams Manila", src: "/customers/city-of-dreams.png" },
+  { name: "Concentrix", src: "/customers/concentrix.png" },
+  { name: "DoubleDragon Properties Corp", src: "/customers/doubledragon.png" },
+  { name: "Globe", src: "/customers/globe.png" },
+  {
+    name: "Manila International Airport Authority",
+    src: "/customers/miaa.png",
+  },
+  { name: "Megaworld", src: "/customers/megaworld.png" },
+  { name: "PAGCOR", src: "/customers/pagcor.png" },
+  { name: "Resorts World Manila", src: "/customers/resorts-world.png" },
+  { name: "Seda", src: "/customers/seda.png" },
+  { name: "Shakey's", src: "/customers/shakeys.png" },
+  { name: "Shangri-La Hotels and Resorts", src: "/customers/shangri-la.png" },
+  { name: "St. Luke's Medical Center", src: "/customers/st-lukes.png" },
+  { name: "Teleperformance", src: "/customers/teleperformance.png" },
+  { name: "TELUS", src: "/customers/telus.png" },
+  { name: "The Ascott Limited", src: "/customers/ascott.png" },
+  { name: "The Peninsula Manila", src: "/customers/peninsula.png" },
+  { name: "Vikings", src: "/customers/vikings.png" },
+];
 
 // ============================================================
 // DESIGN SYSTEM
 // ============================================================
-
-const COLORS = {
-  dark: "#103B2A",
-  green: "#087443",
-  bright: "#10A45A",
-  light: "#F3F8F5",
-  muted: "#64756B",
-  border: "#E4ECE7",
-};
 
 type SectionKey = "hero" | "story" | "products";
 
@@ -253,8 +279,7 @@ const EMPTY_IMAGES: ImagesBySection = {
 // ============================================================
 
 function useInstitutionalImages(): ImagesBySection {
-  const [images, setImages] =
-    React.useState<ImagesBySection>(EMPTY_IMAGES);
+  const [images, setImages] = React.useState<ImagesBySection>(EMPTY_IMAGES);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -271,7 +296,7 @@ function useInstitutionalImages(): ImagesBySection {
           Array.isArray(value)
             ? value.filter(
                 (item): item is string =>
-                  typeof item === "string" && item.length > 0
+                  typeof item === "string" && item.length > 0,
               )
             : [];
 
@@ -283,10 +308,7 @@ function useInstitutionalImages(): ImagesBySection {
           });
         }
       } catch (error) {
-        console.error(
-          "Unable to load institutional images:",
-          error
-        );
+        console.error("Unable to load institutional images:", error);
       }
     }
 
@@ -304,11 +326,7 @@ function useInstitutionalImages(): ImagesBySection {
 // IMAGE COMPONENTS
 // ============================================================
 
-function Placeholder({
-  className = "",
-}: {
-  className?: string;
-}) {
+function Placeholder({ className = "" }: { className?: string }) {
   return (
     <div
       className={`flex items-center justify-center bg-gradient-to-br from-[#0B5938] to-[#13A45C] ${className}`}
@@ -318,13 +336,7 @@ function Placeholder({
   );
 }
 
-function Photo({
-  src,
-  className = "",
-}: {
-  src?: string;
-  className?: string;
-}) {
+function Photo({ src, className = "" }: { src?: string; className?: string }) {
   if (!src) {
     return <Placeholder className={className} />;
   }
@@ -344,11 +356,7 @@ function Photo({
 // HERO SLIDESHOW
 // ============================================================
 
-function HeroSlideshow({
-  images,
-}: {
-  images: string[];
-}) {
+function HeroSlideshow({ images }: { images: string[] }) {
   const [index, setIndex] = React.useState(0);
 
   const count = images.length;
@@ -358,11 +366,7 @@ function HeroSlideshow({
 
     if (count <= 1) return;
 
-    if (
-      window.matchMedia(
-        "(prefers-reduced-motion: reduce)"
-      ).matches
-    ) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return;
     }
 
@@ -374,10 +378,7 @@ function HeroSlideshow({
   }, [count]);
 
   const go = (direction: number) => {
-    setIndex(
-      (current) =>
-        (current + direction + count) % count
-    );
+    setIndex((current) => (current + direction + count) % count);
   };
 
   return (
@@ -429,9 +430,7 @@ function HeroSlideshow({
                 aria-current={i === index}
                 onClick={() => setIndex(i)}
                 className={`h-2 rounded-full transition-all ${
-                  i === index
-                    ? "w-8 bg-white"
-                    : "w-2 bg-white/60"
+                  i === index ? "w-8 bg-white" : "w-2 bg-white/60"
                 }`}
               />
             ))}
@@ -443,17 +442,12 @@ function HeroSlideshow({
 }
 
 // ============================================================
-// SECTION LABEL
+// SECTION LABEL (dot removed on all labels)
 // ============================================================
 
-function SectionLabel({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#087443]">
-      <span className="h-1.5 w-1.5 rounded-full bg-[#10A45A]" />
+    <span className="inline-flex items-center text-xs font-bold uppercase tracking-[0.18em] text-[#087443]">
       {children}
     </span>
   );
@@ -521,33 +515,22 @@ function Hero() {
 // PRODUCT CATEGORIES
 // ============================================================
 
-function ProductCategories({
-  images,
-}: {
-  images: string[];
-}) {
+function ProductCategories({ images }: { images: string[] }) {
   return (
     <section className="bg-white py-16">
       <div className="container">
-        <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
-          <div>
-            <SectionLabel>
-              EXPLORE OUR RANGE
-            </SectionLabel>
+        <div>
+          <h2 className="max-w-4xl font-display text-3xl font-semibold leading-tight text-[#103B2A] sm:text-4xl">
+            Explore Our Products for Hotels, Institutions, and Restaurants
+          </h2>
 
-            <h2 className="mt-4 max-w-2xl font-display text-3xl font-semibold leading-tight text-[#103B2A] sm:text-4xl">
-              Essential products for cleaner workplaces.
-            </h2>
-          </div>
-
-          <p className="max-w-md text-sm leading-7 text-[#64756B] sm:text-base">
-            Discover hygiene essentials and institutional
-            products designed to support your daily facility
-            requirements.
+          <p className="mt-4 max-w-3xl text-base font-medium leading-7 text-[#35503F] sm:text-lg sm:leading-8">
+            Discover hygiene essentials and institutional products designed to
+            support your daily facility requirements.
           </p>
         </div>
 
-        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {CATEGORIES.map((category) => (
             <a
               href="#products"
@@ -587,59 +570,6 @@ function ProductCategories({
 }
 
 // ============================================================
-// WHY ECO-HYGIENE
-// ============================================================
-
-function WhyEcoHygiene() {
-  return (
-    <section className="bg-[#103B2A] py-16 text-white sm:py-20">
-      <div className="container">
-        <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:gap-16">
-          <div>
-            <SectionLabel>
-              YOUR INSTITUTIONAL PARTNER
-            </SectionLabel>
-
-            <h2 className="mt-5 font-display text-3xl font-semibold leading-tight sm:text-4xl">
-              More than products. A better approach to hygiene.
-            </h2>
-
-            <p className="mt-5 text-base leading-8 text-white/70">
-              The right hygiene supplies help create cleaner,
-              more comfortable, and more efficient spaces.
-              Eco-Hygiene supports businesses with practical
-              institutional solutions.
-            </p>
-
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {BENEFITS.map(({ icon: Icon, title, text }) => (
-              <div
-                key={title}
-                className="rounded-xl border border-white/10 bg-white/[0.06] p-6 transition hover:bg-white/[0.10]"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#10A45A]/20 text-[#65D99A]">
-                  <Icon size={23} />
-                </div>
-
-                <h3 className="mt-5 text-lg font-semibold">
-                  {title}
-                </h3>
-
-                <p className="mt-2 text-sm leading-7 text-white/65">
-                  {text}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ============================================================
 // INDUSTRIES WE SERVE
 // ============================================================
 
@@ -648,18 +578,15 @@ function Industries() {
     <section className="bg-[#F3F8F5] py-16 sm:py-24">
       <div className="container">
         <div className="mx-auto max-w-2xl text-center">
-          <SectionLabel>
-            INDUSTRY SOLUTIONS
-          </SectionLabel>
+          <SectionLabel>INDUSTRY SOLUTIONS</SectionLabel>
 
           <h2 className="mt-4 font-display text-3xl font-semibold leading-tight text-[#103B2A] sm:text-4xl">
             Solutions for every kind of facility.
           </h2>
 
           <p className="mt-4 text-base leading-7 text-[#64756B]">
-            Every industry has different hygiene requirements.
-            We help businesses find the right essentials for
-            their everyday operations.
+            Every industry has different hygiene requirements. We help
+            businesses find the right essentials for their everyday operations.
           </p>
         </div>
 
@@ -692,27 +619,18 @@ function Industries() {
 // STORY / FEATURE SECTIONS
 // ============================================================
 
-function StorySection({
-  images,
-}: {
-  images: string[];
-}) {
+function StorySection({ images }: { images: string[] }) {
   return (
     <section className="bg-white py-16 sm:py-24">
       <div className="container">
-        <div className="max-w-2xl">
-          <SectionLabel>
-            THE ECO-HYGIENE DIFFERENCE
-          </SectionLabel>
-
-          <h2 className="mt-4 font-display text-3xl font-semibold leading-tight text-[#103B2A] sm:text-4xl">
-            A cleaner standard for institutions.
+        <div>
+          <h2 className="font-display text-4xl font-bold leading-tight text-[#103B2A] sm:text-5xl">
+            The Eco-Hygiene Difference
           </h2>
 
-          <p className="mt-4 text-base leading-7 text-[#64756B]">
-            Discover how the right products and practical
-            hygiene solutions can make a difference in your
-            facility.
+          <p className="mt-4 text-base leading-7 text-[#64756B] lg:whitespace-nowrap">
+            Discover how the right products and practical hygiene solutions can
+            make a difference in your facility.
           </p>
         </div>
 
@@ -722,7 +640,7 @@ function StorySection({
 
             return (
               <div
-                key={item.title}
+                key={item.eyebrow}
                 className="grid items-center gap-10 lg:grid-cols-2 lg:gap-20"
               >
                 <div className={flip ? "lg:order-2" : ""}>
@@ -741,9 +659,7 @@ function StorySection({
                 </div>
 
                 <div className={flip ? "lg:order-1" : ""}>
-                  <SectionLabel>
-                    {item.eyebrow}
-                  </SectionLabel>
+                  <SectionLabel>{item.eyebrow}</SectionLabel>
 
                   <h3 className="mt-5 max-w-lg font-display text-3xl font-semibold leading-tight text-[#103B2A] sm:text-4xl">
                     {item.title}
@@ -778,63 +694,222 @@ function StorySection({
 }
 
 // ============================================================
+// PRODUCT SPECIFICATION MODAL
+// ============================================================
+
+function ProductModal({
+  product,
+  image,
+  onClose,
+}: {
+  product: Product;
+  image?: string;
+  onClose: () => void;
+}) {
+  React.useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0E2A1C]/70 p-4"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${product.name} specifications`}
+        onClick={(event) => event.stopPropagation()}
+        className="relative grid max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-2xl md:grid-cols-2"
+      >
+        <button
+          type="button"
+          aria-label="Close specifications"
+          onClick={onClose}
+          className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#103B2A] shadow-md transition hover:bg-[#F3F8F5]"
+        >
+          <X size={18} />
+        </button>
+
+        <div className="bg-[#EAF5EE]">
+          <Photo
+            src={image}
+            className="aspect-[4/3] h-full w-full md:aspect-auto"
+          />
+        </div>
+
+        <div className="p-6 sm:p-8">
+          <h3 className="pr-8 font-display text-2xl font-semibold leading-tight text-[#103B2A] sm:text-3xl">
+            {product.name}
+          </h3>
+
+          <p className="mt-3 text-base leading-7 text-[#35503F]">
+            {product.tagline}
+          </p>
+
+          <h4 className="mt-6 text-sm font-bold uppercase tracking-[0.14em] text-[#087443]">
+            Specifications
+          </h4>
+
+          <dl className="mt-3 divide-y divide-[#E4ECE7] border-y border-[#E4ECE7]">
+            {product.specs.map((spec) => (
+              <div
+                key={spec.label}
+                className="grid grid-cols-[9rem_1fr] gap-4 py-3 text-sm"
+              >
+                <dt className="font-semibold text-[#103B2A]">{spec.label}</dt>
+                <dd className="text-[#35503F]">{spec.value}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <p className="mt-6 text-sm leading-6 text-[#35503F]">
+            For full product details and quotations, contact{" "}
+            <a
+              href={`tel:${CONTACT_NUMBER.replace(/[^\d+]/g, "")}`}
+              className="font-semibold text-[#087443] underline-offset-2 hover:underline"
+            >
+              {CONTACT_NUMBER}
+            </a>
+            .
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // INSTITUTIONAL PRODUCT SHOWCASE
 // ============================================================
 
-function ProductShowcase({
-  images,
-}: {
-  images: string[];
-}) {
+function ProductShowcase({ images }: { images: string[] }) {
+  const [selected, setSelected] = React.useState<number | null>(null);
+
+  const closeModal = React.useCallback(() => setSelected(null), []);
+
   return (
-    <section
-      id="products"
-      className="scroll-mt-24 bg-[#F3F8F5] py-16 sm:py-24"
-    >
+    <section id="products" className="scroll-mt-24 bg-[#F3F8F5] py-16 sm:py-24">
       <div className="container">
-        <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
-          <div>
-            <SectionLabel>
-              OUR PRODUCT COLLECTION
-            </SectionLabel>
+        <div>
+          <h2 className="font-display text-3xl font-semibold leading-tight text-[#103B2A] sm:text-4xl">
+            Our Product Collection
+          </h2>
 
-            <h2 className="mt-4 font-display text-3xl font-semibold leading-tight text-[#103B2A] sm:text-4xl">
-              Our institutional range.
-            </h2>
-
-            <p className="mt-4 max-w-xl text-base leading-7 text-[#64756B]">
-              Explore our selection of hygiene products and
-              essential supplies for professional environments.
-            </p>
-          </div>
+          <p className="mt-4 text-base leading-7 text-[#64756B] lg:whitespace-nowrap">
+            Explore our selection of hygiene products and essential supplies for
+            professional environments.
+          </p>
         </div>
 
         <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: PRODUCT_COUNT }).map((_, i) => {
-            const caption = PRODUCT_CAPTIONS[i];
-            const description = PRODUCT_DESCRIPTIONS[i];
-
-            return (
-              <article
-                key={i}
-                className="group overflow-hidden rounded-xl border border-[#E4ECE7] bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#103B2A]/10"
-              >
-                <div className="aspect-[4/3] overflow-hidden bg-[#EAF5EE]">
-                  <Photo
-                    src={images[i]}
-                    className="h-full w-full transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-              </article>
-            );
-          })}
+          {PRODUCTS.map((product, i) => (
+            <button
+              type="button"
+              key={`${product.name}-${i}`}
+              onClick={() => setSelected(i)}
+              aria-haspopup="dialog"
+              aria-label={`View ${product.name} specifications`}
+              className="group overflow-hidden rounded-xl border border-[#E4ECE7] bg-white text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#103B2A]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#087443]"
+            >
+              <div className="aspect-[4/3] overflow-hidden bg-[#EAF5EE]">
+                <Photo
+                  src={images[i]}
+                  className="h-full w-full transition-transform duration-500 group-hover:scale-105"
+                />
+              </div>
+            </button>
+          ))}
         </div>
 
-        <p className="mt-8 text-center text-xs leading-6 text-[#64756B]">
-          Product availability and specifications are subject
-          to confirmation. Contact our team for product details
-          and quotations.
+        <p className="mt-8 text-center text-sm font-medium leading-7 text-[#103B2A] sm:text-base sm:leading-8">
+          Product availability are subject for confirmation.
+          <br />
+          Contact{" "}
+          <a
+            href={`tel:${CONTACT_NUMBER.replace(/[^\d+]/g, "")}`}
+            className="font-semibold underline-offset-2 hover:underline"
+          >
+            {CONTACT_NUMBER}
+          </a>{" "}
+          for product details and quotations.
         </p>
+      </div>
+
+      {selected !== null && (
+        <ProductModal
+          product={PRODUCTS[selected]}
+          image={images[selected]}
+          onClose={closeModal}
+        />
+      )}
+    </section>
+  );
+}
+
+// ============================================================
+// OUR CUSTOMERS
+// ============================================================
+
+function CustomerLogo({ name, src }: { name: string; src: string }) {
+  const [failed, setFailed] = React.useState(false);
+
+  return (
+    <div className="flex h-20 items-center justify-center rounded-xl bg-[#E4F0E0] p-3">
+      {failed ? (
+        <span className="text-center text-xs font-semibold leading-4 text-[#103B2A]">
+          {name}
+        </span>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={name}
+          loading="lazy"
+          onError={() => setFailed(true)}
+          className="max-h-12 w-auto max-w-full object-contain"
+        />
+      )}
+    </div>
+  );
+}
+
+function Customers() {
+  return (
+    <section className="bg-white py-16 sm:py-20">
+      <div className="container">
+        <div className="text-center">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#64756B]">
+            Trusted by
+          </p>
+
+          <h2 className="mt-2 font-display text-3xl font-semibold text-[#103B2A]">
+            Our Customers
+          </h2>
+
+          <div className="mx-auto mt-4 h-px w-14 bg-[#C9D8CE]" />
+        </div>
+
+        <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          {CUSTOMERS.map((customer) => (
+            <CustomerLogo
+              key={customer.name}
+              name={customer.name}
+              src={customer.src}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -856,14 +931,13 @@ export default function EcoHygieneInstitutionalPage() {
 
         <ProductCategories images={images.products} />
 
-        <WhyEcoHygiene />
-
         <Industries />
 
         <StorySection images={images.story} />
 
         <ProductShowcase images={images.products} />
 
+        <Customers />
       </main>
 
       <Footer />
