@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
-  Leaf,
   Hotel,
   UtensilsCrossed,
   Hospital,
@@ -18,15 +17,14 @@ import {
   Scissors,
   PartyPopper,
   Home,
-  ArrowRight,
   ArrowUpRight,
   Search,
   X,
   type LucideIcon,
 } from "lucide-react";
-
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { CategoryStrip } from "@/components/category-strip";
 const IMAGE_BASE_URL = (
   process.env.NEXT_PUBLIC_IMAGES_URL ??
   process.env.NEXT_PUBLIC_IMAGE_URL ??
@@ -50,29 +48,6 @@ type ManagedBanner = {
   image_url: string;
   sort_order: number;
 };
-
-// Product category tiles
-const CATEGORIES: {
-  title: string;
-  description: string;
-  imageIndex: number;
-}[] = [
-  {
-    title: "Paper",
-    description: "Reliable tissue and towel solutions for every washroom.",
-    imageIndex: 0,
-  },
-  {
-    title: "Disinfectants",
-    description: "Hand soaps and sanitizers for cleaner, safer facilities.",
-    imageIndex: 1,
-  },
-  {
-    title: "Dispensers",
-    description: "Keep your facilities clean, stocked, and ready.",
-    imageIndex: 2,
-  },
-];
 
 const SECTORS: {
   icon: LucideIcon;
@@ -126,6 +101,7 @@ const CUSTOMERS: { name: string; src: string }[] = [
 // ------------------------------------------------------------
 const CONTACT_PAGE_URL = "/contact";
 const INSTITUTIONAL_HERO_IMAGE = "/products/eco-hygiene-dispenser.jpg";
+const INSTITUTIONAL_FALLBACK_BANNER = "/banner/banner1.png";
 
 const INSTITUTIONAL_CONTACTS = {
   landline: {
@@ -172,35 +148,54 @@ interface ProductFamily {
 }
 
 const FALLBACK_INSTITUTIONAL_PRODUCTS: InstitutionalProduct[] = [
-  "Jumbo Roll Tissue Dispenser",
-  "Jumbo Coreless Tissue Roll",
-  "Centerpull Square Plastic Dispenser",
-  "Jumbo Tissue Roll",
-  "Center Pull Stainless Dispenser",
-  "Interfolded Paper Towel Dispenser",
-  "Interfolded Paper Towel – Wrapped",
-  "Interfolded Paper Towel – Boxed",
-  "Upright Facial Tissue Box",
-  "Flat Facial Tissue Dispenser",
-  "Facial Tissue",
-  "Interleaved Tissue Dispenser",
-  "Interleaved Table Napkin",
-  "Table Napkin",
-  "Handroll Tissue Dispenser",
-  "Handroll Tissue Dispenser Auto Cut",
-  "Handroll Tissue",
-  "Bathroom Tissue Roll",
-  "Manual Hand Soap Dispenser 300 ml",
-  "Manual Hand Soap Dispenser 1000 ml",
-  "Automatic Hand Soap Dispenser",
-  "Strawberry Scent",
-  "Peppermint Scent",
-  "Apple Scent Sanitizer",
-].map((name, index) => ({
+  ["Jumbo Roll Tissue Dispenser", "jumbo-roll-tissue-dispenser"],
+  ["Jumbo Coreless Tissue Roll", "jumbo-coreless-tissue-roll"],
+  ["Centerpull Square Plastic Dispenser", "centerpull-square-plastic-dispenser"],
+  ["Jumbo Tissue Roll", "jumbo-tissue-roll"],
+  ["Center Pull Stainless Dispenser", "center-pull-stainless-dispenser"],
+  ["Interfolded Paper Towel Dispenser", "interfolded-paper-towel-dispenser"],
+  ["Interfolded Paper Towel – Wrapped", "interfolded-paper-towel-wrapped"],
+  ["Interfolded Paper Towel – Boxed", "interfolded-paper-towel-boxed"],
+  ["Upright Facial Tissue Box", "upright-facial-tissue-box"],
+  ["Flat Facial Tissue Dispenser", "flat-facial-tissue-dispenser"],
+  ["Facial Tissue", "facial-tissue"],
+  ["Interleaved Tissue Dispenser", "interleaved-tissue-dispenser"],
+  ["Interleaved Table Napkin", "interleaved-table-napkin"],
+  ["Table Napkin", "table-napkin"],
+  ["Handroll Tissue Dispenser", "handroll-tissue-dispenser"],
+  ["Handroll Tissue Dispenser Auto Cut", "handroll-tissue-dispenser-auto-cut"],
+  ["Handroll Tissue", "handroll-tissue"],
+  ["Bathroom Tissue Roll", "bathroom-tissue-roll"],
+  ["Manual Hand Soap Dispenser 300 ml", "manual-hand-soap-dispenser-300ml"],
+  ["Manual Hand Soap Dispenser 1000 ml", "manual-hand-soap-dispenser-1000ml"],
+  ["Automatic Hand Soap Dispenser", "automatic-hand-soap-dispenser"],
+  ["Strawberry Scent", "strawberry-scent"],
+  ["Peppermint Scent", "peppermint-scent"],
+  ["Apple Scent Sanitizer", "apple-scent-sanitizer"],
+].map(([name, imageName], index) => ({
   id: `eco-hygiene-${index + 1}`,
   name,
-  image: null,
+  image: `/institutional/${imageName}.png`,
 }));
+
+function mergeFallbackInstitutionalImages(
+  products: InstitutionalProduct[],
+): InstitutionalProduct[] {
+  const fallbackByName = new Map(
+    FALLBACK_INSTITUTIONAL_PRODUCTS.map((product) => [
+      product.name.trim().toLowerCase(),
+      product.image,
+    ]),
+  );
+
+  return products.map((product) => ({
+    ...product,
+    image:
+      product.image ??
+      fallbackByName.get(product.name.trim().toLowerCase()) ??
+      null,
+  }));
+}
 
 const FAMILIES: { title: string; description: string; match: RegExp }[] = [
   {
@@ -309,7 +304,7 @@ function useInstitutionalProducts(): InstitutionalProduct[] {
         } = await res.json();
 
         if (!cancelled && body.success && body.data.length > 0) {
-          setProducts(body.data);
+          setProducts(mergeFallbackInstitutionalImages(body.data));
         }
       } catch {
         // The institutional range must remain visible during API outages.
@@ -324,94 +319,6 @@ function useInstitutionalProducts(): InstitutionalProduct[] {
   }, []);
 
   return products;
-}
-
-// ============================================================
-// IMAGE API
-// ============================================================
-
-type SectionKey = "hero" | "story" | "products";
-type ImagesBySection = Record<SectionKey, string[]>;
-
-const EMPTY_IMAGES: ImagesBySection = {
-  hero: [],
-  story: [],
-  products: [],
-};
-
-function useInstitutionalImages(): ImagesBySection {
-  const [images, setImages] = React.useState<ImagesBySection>(EMPTY_IMAGES);
-
-  React.useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/institutional/public`, {
-          cache: "no-store",
-        });
-        if (!res.ok) return;
-
-        const data = await res.json();
-
-        const pick = (value: unknown): string[] =>
-          Array.isArray(value)
-            ? value.filter(
-                (item): item is string =>
-                  typeof item === "string" && item.length > 0,
-              )
-            : [];
-
-        if (!cancelled) {
-          setImages({
-            hero: pick(data?.hero),
-            story: pick(data?.story),
-            products: pick(data?.products),
-          });
-        }
-      } catch (error) {
-        console.error("Unable to load institutional images:", error);
-      }
-    }
-
-    load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return images;
-}
-
-// ============================================================
-// IMAGE COMPONENTS
-// ============================================================
-
-function Placeholder({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={`flex items-center justify-center bg-gradient-to-br from-[#0B5938] to-[#13A45C] ${className}`}
-    >
-      <Leaf className="h-12 w-12 text-white/30" />
-    </div>
-  );
-}
-
-function Photo({ src, className = "" }: { src?: string; className?: string }) {
-  if (!src) {
-    return <Placeholder className={className} />;
-  }
-
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={src}
-      alt=""
-      loading="lazy"
-      className={`object-cover ${className}`}
-    />
-  );
 }
 
 // ============================================================
@@ -432,7 +339,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function Hero() {
   const [bannerSrc, setBannerSrc] = React.useState(
-    "/banner/eco-hygiene-institutional-banner.jpg",
+    INSTITUTIONAL_FALLBACK_BANNER,
   );
 
   React.useEffect(() => {
@@ -477,66 +384,9 @@ function Hero() {
             alt="Q-STORE - Everyday essentials. Quality you can trust. Your one-stop-store for hygiene, cleaning and institutional supplies."
             className="block h-auto w-full object-contain"
             fetchPriority="high"
+            onError={() => setBannerSrc(INSTITUTIONAL_FALLBACK_BANNER)}
           />
         </a>
-      </div>
-    </section>
-  );
-}
-
-// ============================================================
-// PRODUCT CATEGORIES
-// ============================================================
-
-function ProductCategories({ images }: { images: string[] }) {
-  return (
-    <section className="bg-white py-16">
-      <div className="container">
-        <div>
-          <h2 className="max-w-4xl font-display text-3xl font-semibold leading-tight text-[#103B2A] sm:text-4xl">
-            Explore Our Products for Hotels, Institutions, and Restaurants
-          </h2>
-
-          <p className="mt-4 max-w-3xl text-base font-medium leading-7 text-[#35503F] sm:text-lg sm:leading-8">
-            Discover hygiene essentials and institutional products designed to
-            support your daily facility requirements.
-          </p>
-        </div>
-
-        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {CATEGORIES.map((category) => (
-            <a
-              href="#institutional-range"
-              key={category.title}
-              className="group overflow-hidden rounded-xl border border-[#E4ECE7] bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#103B2A]/10"
-            >
-              <div className="aspect-[4/3] overflow-hidden bg-[#F3F8F5]">
-                <Photo
-                  src={images[category.imageIndex]}
-                  className="h-full w-full transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
-
-              <div className="p-5">
-                <h3 className="font-display text-lg font-semibold text-[#103B2A]">
-                  {category.title}
-                </h3>
-
-                <p className="mt-2 text-sm leading-6 text-[#64756B]">
-                  {category.description}
-                </p>
-
-                <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#087443]">
-                  Explore range
-                  <ArrowRight
-                    size={15}
-                    className="transition-transform group-hover:translate-x-1"
-                  />
-                </span>
-              </div>
-            </a>
-          ))}
-        </div>
       </div>
     </section>
   );
@@ -970,7 +820,7 @@ function Customers() {
               name={customer.name}
               src={customer.src}
             />
-          ))}
+          ))} 
         </div>
       </div>
     </section>
@@ -982,17 +832,16 @@ function Customers() {
 // ============================================================
 
 export default function EcoHygieneInstitutionalPage() {
-  const images = useInstitutionalImages();
   const products = useInstitutionalProducts();
 
   return (
     <>
       <Navbar />
-
+      <React.Suspense fallback={null}>
+        <CategoryStrip />
+      </React.Suspense>
       <main className="min-h-screen bg-white">
         <Hero />
-
-        <ProductCategories images={images.products} />
 
         <Industries />
 

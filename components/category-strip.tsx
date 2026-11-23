@@ -170,7 +170,7 @@ export function CategoryStrip() {
         <Link
           href={INSTITUTIONAL_HREF}
           className={cn(
-            "shrink-0 whitespace-nowrap transition-colors hover:text-green-600",
+            "shrink-0 whitespace-nowrap normal-case tracking-normal transition-colors hover:text-green-600",
             institutionalActive && "text-green-600",
           )}
         >
