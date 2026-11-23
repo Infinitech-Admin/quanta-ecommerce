@@ -35,7 +35,7 @@ function getImageUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   if (/^(https?:|blob:|data:)/.test(path)) return path;
   // Static Next.js assets belong to the frontend, not the Laravel origin.
-  if (/^\/(brands|images)\//.test(path)) return path;
+  if (/^\/(brands|images|institutional)\//.test(path)) return path;
   return `${IMAGE_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
@@ -178,21 +178,37 @@ const FALLBACK_INSTITUTIONAL_PRODUCTS: InstitutionalProduct[] = [
   image: `/institutional/${imageName}.png`,
 }));
 
+const FALLBACK_IMAGE_BY_NAME = new Map(
+  FALLBACK_INSTITUTIONAL_PRODUCTS.map((product) => [
+    product.name.trim().toLowerCase(),
+    product.image,
+  ]),
+);
+
+function getFallbackProductImage(name: string): string | null {
+  return FALLBACK_IMAGE_BY_NAME.get(name.trim().toLowerCase()) ?? null;
+}
+
+function handleProductImageError(
+  event: React.SyntheticEvent<HTMLImageElement>,
+  fallbackSrc: string | null,
+) {
+  const image = event.currentTarget;
+  if (fallbackSrc && image.getAttribute("src") !== fallbackSrc) {
+    image.src = fallbackSrc;
+  } else {
+    image.hidden = true;
+  }
+}
+
 function mergeFallbackInstitutionalImages(
   products: InstitutionalProduct[],
 ): InstitutionalProduct[] {
-  const fallbackByName = new Map(
-    FALLBACK_INSTITUTIONAL_PRODUCTS.map((product) => [
-      product.name.trim().toLowerCase(),
-      product.image,
-    ]),
-  );
-
   return products.map((product) => ({
     ...product,
     image:
-      product.image ??
-      fallbackByName.get(product.name.trim().toLowerCase()) ??
+      product.image?.trim() ||
+      getFallbackProductImage(product.name) ||
       null,
   }));
 }
@@ -499,21 +515,6 @@ function InstitutionalProductsShowcase({
               dispensers, and hygiene supplies for your facility.
             </p>
 
-            <ul className="mt-6 flex flex-wrap gap-2.5 text-[11px] font-bold">
-              {[
-                `${products.length} featured items`,
-                `${allFamilies.length} solution families`,
-                "Institutional supply",
-              ].map((chip) => (
-                <li
-                  key={chip}
-                  className="rounded-full border border-white/25 bg-white/10 px-4 py-2.5"
-                >
-                  {chip}
-                </li>
-              ))}
-            </ul>
-
             <div className="mt-7 flex flex-wrap gap-3">
               <a
                 href="#institutional-range"
@@ -591,6 +592,9 @@ function InstitutionalProductsShowcase({
               <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {family.items.map(({ product, itemNumber }) => {
                   const src = getImageUrl(product.image);
+                  const fallbackSrc = getImageUrl(
+                    getFallbackProductImage(product.name),
+                  );
                   return (
                     <button
                       key={product.id}
@@ -612,6 +616,9 @@ function InstitutionalProductsShowcase({
                             alt={product.name}
                             className="max-h-full max-w-full object-contain transition-transform duration-200 group-hover:scale-105"
                             draggable={false}
+                            onError={(event) =>
+                              handleProductImageError(event, fallbackSrc)
+                            }
                           />
                         ) : (
                           <span className="text-4xl font-bold text-[#0f4a2c]/30">
@@ -720,6 +727,14 @@ function InstitutionalProductsShowcase({
                   src={getImageUrl(selected.product.image)!}
                   alt={selected.product.name}
                   className="max-h-full max-w-full object-contain"
+                  onError={(event) =>
+                    handleProductImageError(
+                      event,
+                      getImageUrl(
+                        getFallbackProductImage(selected.product.name),
+                      ),
+                    )
+                  }
                 />
               )}
             </div>
