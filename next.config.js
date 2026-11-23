@@ -35,8 +35,8 @@ const nextConfig = {
     return [
       {
         source: "/((?!_next|sw\\.js|workbox-.*|swe-worker-.*|worker).*)",
-        destination: "https://qstore.tissuemarket.com/:path*",
-        permanent: true, // change to true once you're sure it's final (308)
+        destination: "https://qstore.tissuemarket.com",
+        permanent: true,
       },
     ];
   },
