@@ -27,6 +27,20 @@ const nextConfig = {
       },
     ],
   },
+
+  // Site moved to qstore.tissuemarket.com
+  // Excludes _next assets and the service worker files so existing
+  // PWA users can still fetch the updated SW and get redirected.
+  async redirects() {
+    return [
+      {
+        source: "/((?!_next|sw\\.js|workbox-.*|swe-worker-.*|worker).*)",
+        destination: "https://qstore.tissuemarket.com",
+        permanent: true,
+      },
+    ];
+  },
+
   // No headers() function here anymore — CSP is set in middleware.ts instead
 };
 
@@ -39,7 +53,7 @@ module.exports = withPWA({
   customWorkerSrc: "worker",
   workboxOptions: {
     disableDevLogs: true,
-    skipWaiting: false,
+    skipWaiting: true, // was false; lets old users pick up the redirect right away
     clientsClaim: true,
   },
 })(nextConfig);
